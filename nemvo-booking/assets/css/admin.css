@@ -1,0 +1,350 @@
+/* Nemvo Booking – admin screens */
+.nb-admin .nb-panel {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 4px 20px 16px;
+	margin: 16px 0;
+	max-width: 1100px;
+}
+
+.nb-admin .nb-panel > h2 {
+	margin-top: 16px;
+}
+
+.nb-admin .nb-intro {
+	max-width: 800px;
+	font-size: 14px;
+}
+
+.nb-admin .nb-table {
+	max-width: 1100px;
+}
+
+.nb-admin .nb-table td {
+	vertical-align: middle;
+}
+
+.nb-checklist ol {
+	margin-left: 1.5em;
+}
+
+.nb-checklist li {
+	margin-bottom: 6px;
+}
+
+.nb-checklist li.is-done {
+	color: #646970;
+}
+
+.nb-checklist li.is-done::marker {
+	content: "✓  ";
+	color: #00a32a;
+	font-weight: 700;
+}
+
+.nb-guide {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 10px 16px;
+	margin: 12px 0;
+}
+
+.nb-guide summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.nb-guide ol {
+	margin-left: 1.5em;
+}
+
+.nb-guide li {
+	margin: 10px 0;
+	line-height: 1.6;
+}
+
+.nb-guide ul {
+	list-style: disc;
+	margin: 6px 0 6px 1.5em;
+}
+
+.nb-code {
+	background: #1d2327;
+	color: #f0f0f1;
+	padding: 12px 14px;
+	border-radius: 4px;
+	overflow-x: auto;
+	font-size: 12px;
+	line-height: 1.5;
+	max-width: 760px;
+}
+
+.nb-redirect {
+	margin: 8px 0;
+}
+
+.nb-copy {
+	display: inline-flex;
+	gap: 4px;
+	align-items: center;
+	max-width: 100%;
+}
+
+.nb-copy input {
+	min-width: 0;
+}
+
+.nb-ok {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.nb-warning {
+	color: #b32d2e;
+}
+
+.nb-radios label {
+	display: block;
+	margin: 0 0 10px;
+}
+
+.nb-email {
+	border-top: 1px solid #dcdcde;
+	padding: 14px 0 6px;
+}
+
+.nb-email-head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 14px;
+	align-items: baseline;
+	margin-bottom: 8px;
+}
+
+.nb-email-head .button-link {
+	margin-left: auto;
+}
+
+.nb-email input[type="text"] {
+	margin-bottom: 6px;
+	font-weight: 600;
+}
+
+.nb-placeholders {
+	margin: 0 0 12px;
+}
+
+.nb-placeholders summary {
+	cursor: pointer;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.nb-placeholders table {
+	max-width: 700px;
+}
+
+.nb-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+}
+
+.nb-inline-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: flex-end;
+}
+
+.nb-inline-form label span {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.nb-avatar {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+	vertical-align: middle;
+	margin-right: 8px;
+	float: left;
+}
+
+.nb-photo {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.nb-photo img {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	object-fit: cover;
+	background: #f0f0f1;
+}
+
+.nb-chip {
+	display: inline-block;
+	margin: 0 12px 6px 0;
+}
+
+.nb-badge {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 600;
+	background: #f0f0f1;
+	color: #50575e;
+	white-space: nowrap;
+}
+
+.nb-badge--confirmed,
+.nb-badge--info {
+	background: #edfaef;
+	color: #00712a;
+}
+
+.nb-badge--cancelled,
+.nb-badge--pending,
+.nb-badge--warning {
+	background: #fcf9e8;
+	color: #8a6d00;
+}
+
+.nb-badge--failed,
+.nb-badge--error {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.nb-actions {
+	white-space: nowrap;
+	text-align: right;
+}
+
+.nb-actions .button-link-delete {
+	margin-left: 10px;
+}
+
+.nb-filters {
+	clear: both;
+	display: flex;
+	gap: 6px;
+	margin: 8px 0 12px;
+	padding-top: 8px;
+}
+
+.nb-fields td {
+	vertical-align: top;
+}
+
+.nb-fields .nb-options {
+	margin-top: 4px;
+}
+
+.nb-fields .is-core {
+	background: #f6f7f7;
+}
+
+.nb-center {
+	text-align: center;
+}
+
+.nb-row-actions {
+	white-space: nowrap;
+}
+
+.nb-row-actions .button-link {
+	font-size: 16px;
+	padding: 0 3px;
+	text-decoration: none;
+}
+
+.nb-hours th {
+	width: 120px;
+}
+
+.nb-title-help {
+	margin: 4px 0 0;
+}
+
+.nb-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	max-width: 1100px;
+}
+
+.nb-columns .nb-panel {
+	margin: 0;
+}
+
+.nb-detail th {
+	width: 140px;
+	padding: 8px 10px 8px 0;
+}
+
+.nb-detail td {
+	padding: 8px 0;
+}
+
+.nb-nowrap {
+	white-space: nowrap;
+}
+
+.nb-log td {
+	vertical-align: top;
+}
+
+@media (max-width: 960px) {
+	.nb-columns {
+		grid-template-columns: 1fr;
+	}
+}
+
+.nb-hosts-table {
+	max-width: 520px;
+	margin: 8px 0;
+}
+
+.nb-hosts-table td:last-child,
+.nb-hosts-table th:last-child {
+	width: 90px;
+	text-align: center;
+}
+
+.nb-hosts-table .nb-avatar {
+	float: none;
+	width: 22px;
+	height: 22px;
+	margin: 0 4px;
+}
+
+.nb-steps {
+	margin: 4px 0 12px 1.4em;
+}
+
+ul.nb-steps {
+	list-style: disc;
+}
+
+.nb-steps li {
+	margin-bottom: 4px;
+}
+
+.nb-holiday-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+	gap: 6px 16px;
+	max-width: 760px;
+	margin-bottom: 8px;
+}

@@ -1,0 +1,90 @@
+# Local development environment for the Nemvo Booking plugin.
+#   WordPress  http://localhost:8080  (admin / admin)
+#   Mailpit    http://localhost:8025  (catches all outgoing email)
+#   Cap        http://localhost:3000  (CAPTCHA dashboard, admin key below)
+name: nemvo-booking
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment: &wp-env
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DEBUG: "1"
+      # 1 = fake Google API responses (no credentials needed). Set to 0 to use real Google.
+      NEMVO_BOOKING_GOOGLE_MOCK: ${NEMVO_BOOKING_GOOGLE_MOCK:-1}
+      NEMVO_DEV_MAILPIT: "1"
+      CAP_ADMIN_KEY: &cap-admin-key local-development-admin-key-change-me-0123456789
+    volumes: &wp-volumes
+      - wp-data:/var/www/html
+      - ../nemvo-booking:/var/www/html/wp-content/plugins/nemvo-booking
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ..:/workspace:cached
+
+  cli:
+    image: wordpress:cli-php8.3
+    profiles: ["cli"]
+    user: "33:33"
+    depends_on:
+      - wordpress
+    environment: *wp-env
+    volumes: *wp-volumes
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+  cap:
+    image: tiago2/cap:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      ADMIN_KEY: *cap-admin-key
+      REDIS_URL: redis://valkey:6379
+    depends_on:
+      valkey:
+        condition: service_healthy
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    restart: unless-stopped
+    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  db-data:
+  wp-data:
+  valkey-data:
