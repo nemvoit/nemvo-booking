@@ -59,6 +59,8 @@ class Admin {
 				'confirmReset'  => __( 'Replace this email with the default text?', 'nemvo-booking' ),
 				'choosePhoto'   => __( 'Choose a photo', 'nemvo-booking' ),
 				'usePhoto'      => __( 'Use this photo', 'nemvo-booking' ),
+				'testing'       => __( 'Testing…', 'nemvo-booking' ),
+				'testFailed'    => __( 'The test could not be run. Reload the page and try again.', 'nemvo-booking' ),
 			)
 		);
 	}

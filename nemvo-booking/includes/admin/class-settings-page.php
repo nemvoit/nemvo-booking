@@ -15,6 +15,7 @@ class SettingsPage {
 
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
+		add_action( 'wp_ajax_nemvo_booking_cap_test', array( __CLASS__, 'ajax_cap_test' ) );
 	}
 
 	public static function register() {
@@ -54,7 +55,7 @@ class SettingsPage {
 			'blocklist'            => sanitize_textarea_field( $input['blocklist'] ?? '' ),
 			'cap_enabled'          => empty( $input['cap_enabled'] ) ? 0 : 1,
 			'cap_url'              => untrailingslashit( esc_url_raw( $input['cap_url'] ?? '' ) ),
-			'cap_internal_url'     => untrailingslashit( esc_url_raw( $input['cap_internal_url'] ?? '' ) ),
+			'cap_public_url'       => untrailingslashit( esc_url_raw( $input['cap_public_url'] ?? '' ) ),
 			'cap_site_key'         => sanitize_text_field( $input['cap_site_key'] ?? '' ),
 			'cap_secret'           => sanitize_text_field( $input['cap_secret'] ?? '' ),
 			'cap_mode'             => 'invisible' === ( $input['cap_mode'] ?? '' ) ? 'invisible' : 'visible',
@@ -86,7 +87,7 @@ class SettingsPage {
 		if ( $out['cap_enabled'] && ! $tested ) {
 			$tested = true;
 			if ( ! $out['cap_url'] || ! $out['cap_site_key'] || ! $out['cap_secret'] ) {
-				add_settings_error( Settings::OPTION, 'cap', __( 'Cap is enabled but the URL, site key or secret key is missing, so Cap is not used yet.', 'nemvo-booking' ) );
+				add_settings_error( Settings::OPTION, 'cap', __( 'Cap is enabled but the server address, site key or secret key is missing, so Cap is not used yet.', 'nemvo-booking' ) );
 			} else {
 				$result = Protection::test_cap( $out );
 				if ( is_wp_error( $result ) ) {
@@ -98,6 +99,30 @@ class SettingsPage {
 			}
 		}
 		return $out;
+	}
+
+	/** "Test connection" button: checks the Cap fields as they are in the form, before saving. */
+	public static function ajax_cap_test() {
+		check_ajax_referer( 'nemvo_booking_cap_test' );
+		if ( ! current_user_can( Admin::CAP ) ) {
+			wp_send_json_error( array( 'message' => __( 'You are not allowed to do this.', 'nemvo-booking' ) ), 403 );
+		}
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash() is applied below.
+		$settings = array(
+			'cap_url'      => untrailingslashit( esc_url_raw( wp_unslash( $_POST['url'] ?? '' ) ) ),
+			'cap_site_key' => sanitize_text_field( wp_unslash( $_POST['site_key'] ?? '' ) ),
+			'cap_secret'   => sanitize_text_field( wp_unslash( $_POST['secret'] ?? '' ) ),
+		);
+		// phpcs:enable
+		if ( ! $settings['cap_url'] || ! $settings['cap_site_key'] || ! $settings['cap_secret'] ) {
+			wp_send_json_error( array( 'message' => __( 'Enter the server address, site key and secret key first.', 'nemvo-booking' ) ) );
+		}
+		$result = Protection::test_cap( $settings );
+		if ( is_wp_error( $result ) ) {
+			/* translators: %s: error message */
+			wp_send_json_error( array( 'message' => sprintf( __( 'Could not verify the Cap connection: %s', 'nemvo-booking' ), $result->get_error_message() ) ) );
+		}
+		wp_send_json_success( array( 'message' => __( 'Cap is reachable and accepts the keys.', 'nemvo-booking' ) ) );
 	}
 
 	private static function name( string $key ): string {
@@ -512,9 +537,9 @@ volumes:
 								);
 								?>
 							</li>
-							<li><?php esc_html_e( 'Make Cap reachable over HTTPS from the internet, e.g. as https://cap.example.com, through your reverse proxy (Caddy, nginx, Traefik…) forwarding to port 3000. Visitors\' browsers talk to Cap directly, and a site on https:// can\'t use an http:// address.', 'nemvo-booking' ); ?></li>
-							<li><?php esc_html_e( 'Open Cap\'s dashboard at that address, log in with the admin key and create a site key. Copy the site key and its secret key (the secret is shown once). In the site key\'s settings: keep "instrumentation challenges" on, and turn on "block automated browsers" for Cap\'s own headless browser detection. You can also restrict the key to your site\'s domain (CORS origins) and tune the difficulty.', 'nemvo-booking' ); ?></li>
-							<li><?php esc_html_e( 'Fill in the fields below, tick "Use Cap" and save. The connection is tested when you save.', 'nemvo-booking' ); ?></li>
+							<li><?php esc_html_e( 'Cap only has to be reachable from WordPress, e.g. as http://cap:3000 when WordPress runs in the same Docker network. Visitors\' browsers talk to this site, and WordPress passes their requests on to Cap. If you prefer, you can also make Cap reachable over HTTPS from the internet (e.g. https://cap.example.com through your reverse proxy) and enter that as the public address, so browsers talk to Cap directly.', 'nemvo-booking' ); ?></li>
+							<li><?php esc_html_e( 'Open Cap\'s dashboard on port 3000 (e.g. through an SSH tunnel, or at its public address), log in with the admin key and create a site key. Copy the site key and its secret key (the secret is shown once). In the site key\'s settings: keep "instrumentation challenges" on, and turn on "block automated browsers" for Cap\'s own headless browser detection. If browsers talk to Cap directly, you can also restrict the key to your site\'s domain (CORS origins). You can tune the difficulty too.', 'nemvo-booking' ); ?></li>
+							<li><?php esc_html_e( 'Fill in the fields below, click "Test connection", then tick "Use Cap" and save. The connection is also tested when you save.', 'nemvo-booking' ); ?></li>
 						</ol>
 						<p class="description"><?php esc_html_e( 'To update Cap later: docker compose pull && docker compose up -d. If the dashboard isn\'t reachable, Cap\'s documentation suggests adding network_mode: "host" to the cap service.', 'nemvo-booking' ); ?></p>
 					</details>
@@ -528,17 +553,17 @@ volumes:
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="nb-cap-url"><?php esc_html_e( 'Cap URL', 'nemvo-booking' ); ?></label></th>
+							<th scope="row"><label for="nb-cap-url"><?php esc_html_e( 'Cap server', 'nemvo-booking' ); ?></label></th>
 							<td>
-								<input type="url" id="nb-cap-url" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_url' ) ); ?>" value="<?php echo esc_attr( $s['cap_url'] ); ?>" placeholder="https://cap.example.com">
-								<p class="description"><?php esc_html_e( 'The public address of your Cap server, without the site key.', 'nemvo-booking' ); ?></p>
+								<input type="url" id="nb-cap-url" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_url' ) ); ?>" value="<?php echo esc_attr( $s['cap_url'] ); ?>" placeholder="http://cap:3000">
+								<p class="description"><?php esc_html_e( 'The address of your Cap server as WordPress reaches it, without the site key – e.g. http://cap:3000 when WordPress runs in the same Docker network.', 'nemvo-booking' ); ?></p>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="nb-cap-internal"><?php esc_html_e( 'Internal URL (optional)', 'nemvo-booking' ); ?></label></th>
+							<th scope="row"><label for="nb-cap-public"><?php esc_html_e( 'Public Cap address (optional)', 'nemvo-booking' ); ?></label></th>
 							<td>
-								<input type="url" id="nb-cap-internal" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_internal_url' ) ); ?>" value="<?php echo esc_attr( $s['cap_internal_url'] ); ?>" placeholder="http://cap:3000">
-								<p class="description"><?php esc_html_e( 'Address WordPress uses to verify answers, if it differs from the public one – e.g. http://cap:3000 when WordPress runs in the same Docker network. Leave empty to use the Cap URL.', 'nemvo-booking' ); ?></p>
+								<input type="url" id="nb-cap-public" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_public_url' ) ); ?>" value="<?php echo esc_attr( $s['cap_public_url'] ); ?>" placeholder="https://cap.example.com">
+								<p class="description"><?php esc_html_e( 'Only if visitors\' browsers should talk to Cap directly instead of through WordPress. It must be https:// when the site is.', 'nemvo-booking' ); ?></p>
 							</td>
 						</tr>
 						<tr>
@@ -550,6 +575,14 @@ volumes:
 							<td>
 								<input type="password" id="nb-cap-secret" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_secret' ) ); ?>" value="<?php echo esc_attr( $s['cap_secret'] ); ?>" autocomplete="new-password">
 								<p class="description"><?php esc_html_e( 'The site key\'s secret – not the dashboard admin key.', 'nemvo-booking' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"></th>
+							<td>
+								<button type="button" class="button" data-cap-test data-nonce="<?php echo esc_attr( wp_create_nonce( 'nemvo_booking_cap_test' ) ); ?>"><?php esc_html_e( 'Test connection', 'nemvo-booking' ); ?></button>
+								<span class="nb-test-result" role="status"></span>
+								<p class="description"><?php esc_html_e( 'Checks that WordPress reaches the Cap server and that it accepts the site key and secret key, using the values above before you save.', 'nemvo-booking' ); ?></p>
 							</td>
 						</tr>
 						<tr>

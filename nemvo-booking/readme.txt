@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling, google calendar, google meet
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -86,7 +86,7 @@ A host without a photo chosen under Bookings → Employees can be shown with the
 
 **Cap** (your own server, optional)
 
-When Cap is switched on, the visitor's browser gets a proof-of-work puzzle from your own Cap server and solves it before booking. WordPress then checks the answer with that server. Nothing is sent anywhere else, and the Cap server is run by you, not by a third party.
+When Cap is switched on, the visitor's browser gets a proof-of-work puzzle from your own Cap server and solves it before booking. WordPress then checks the answer with that server. By default the browser only talks to your site, which passes the puzzle requests on to Cap (with the visitor's IP address, so Cap can limit repeated requests); if you enter a public Cap address, the browser talks to your Cap server directly. Nothing is sent anywhere else, and the Cap server is run by you, not by a third party.
 
 = Third-party code =
 
@@ -157,6 +157,10 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 8. Upcoming bookings in wp-admin.
 
 == Changelog ==
+
+= 1.2.1 =
+* Cap: the server address is now the one WordPress uses, and a public address is optional. Without one, visitors' browsers talk to Cap through WordPress, so Cap can stay on an internal network. Existing settings are carried over unchanged.
+* Cap: new "Test connection" button that checks the server address and keys before you save.
 
 = 1.2.0 =
 * First public release.

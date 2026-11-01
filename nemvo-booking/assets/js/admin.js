@@ -39,6 +39,28 @@
 			$email.find('[data-body]').val($email.data('default-body'));
 		});
 
+		// Settings: test the Cap connection with the values in the form.
+		$(document).on('click', '[data-cap-test]', function () {
+			var $button = $(this);
+			var $result = $button.siblings('.nb-test-result');
+			$button.prop('disabled', true);
+			$result.removeClass('is-ok is-error').text(l10n.testing);
+			$.post(window.ajaxurl, {
+				action: 'nemvo_booking_cap_test',
+				_ajax_nonce: $button.data('nonce'),
+				url: $('#nb-cap-url').val(),
+				site_key: $('#nb-cap-key').val(),
+				secret: $('#nb-cap-secret').val()
+			}).done(function (response) {
+				var message = response && response.data && response.data.message;
+				$result.addClass(response && response.success ? 'is-ok' : 'is-error').text(message || l10n.testFailed);
+			}).fail(function () {
+				$result.addClass('is-error').text(l10n.testFailed);
+			}).always(function () {
+				$button.prop('disabled', false);
+			});
+		});
+
 		// Employee: photo from the media library.
 		$(document).on('click', '[data-photo-choose]', function () {
 			var $box = $(this).closest('[data-photo]');

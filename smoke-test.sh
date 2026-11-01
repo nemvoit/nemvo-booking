@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Installs a built zip on a clean WordPress (nothing configured: no Google, no Cap, no employees)
 # and checks that wp-admin and the frontend load without PHP errors, then runs Plugin Check.
-# Usage: ./smoke-test.sh dist/nemvo-booking-x.y.z.zip
+# Usage: ./smoke-test.sh dist/nemvo-booking-x.y.z.zip   (SMOKE_PORT=8197 if port 8090 is taken)
 set -euo pipefail
 cd "$(dirname "$0")"
 
 zip_file=${1:?usage: $0 dist/nemvo-booking-x.y.z.zip}
 project=nemvo-smoke
-port=8090
+port=${SMOKE_PORT:-8090}
 url="http://localhost:$port"
 work=$(mktemp -d)
 trap 'docker compose -p $project -f "$work/compose.yml" down -v >/dev/null 2>&1; rm -rf "$work"' EXIT

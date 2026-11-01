@@ -101,11 +101,11 @@ if ( ! empty( $login['session_token'] ) ) {
 	if ( ! empty( $key['siteKey'] ) ) {
 		Settings::update(
 			array(
-				'cap_enabled'      => 1,
-				'cap_url'          => 'http://localhost:3000',
-				'cap_internal_url' => $cap,
-				'cap_site_key'     => $key['siteKey'],
-				'cap_secret'       => $key['secretKey'],
+				'cap_enabled'    => 1,
+				'cap_url'        => $cap,
+				'cap_public_url' => '',
+				'cap_site_key'   => $key['siteKey'],
+				'cap_secret'     => $key['secretKey'],
 			)
 		);
 		WP_CLI::log( 'Cap enabled with site key ' . $key['siteKey'] );

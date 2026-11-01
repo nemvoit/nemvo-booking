@@ -65,6 +65,7 @@ class Rest {
 				),
 			)
 		);
+		Protection::register_routes();
 	}
 
 	/** @return array|\WP_Error */

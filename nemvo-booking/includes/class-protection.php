@@ -17,15 +17,67 @@ class Protection {
 		return $s['cap_enabled'] && $s['cap_url'] && $s['cap_site_key'] && $s['cap_secret'];
 	}
 
-	/** Endpoint the visitor's browser talks to. */
+	/**
+	 * Endpoint the visitor's browser talks to: the public Cap address if one is set, otherwise the
+	 * relay below, so Cap can stay on an internal network and visitors only talk to this site.
+	 */
 	public static function cap_endpoint(): string {
-		return trailingslashit( Settings::get( 'cap_url' ) ) . rawurlencode( (string) Settings::get( 'cap_site_key' ) ) . '/';
+		$s = Settings::all();
+		if ( $s['cap_public_url'] ) {
+			return trailingslashit( $s['cap_public_url'] ) . rawurlencode( (string) $s['cap_site_key'] ) . '/';
+		}
+		return trailingslashit( rest_url( Rest::NS . '/cap' ) );
 	}
 
-	/** Endpoint WordPress uses to verify tokens (may be an internal address). */
-	private static function cap_verify_url( array $s ): string {
-		$base = $s['cap_internal_url'] ?: $s['cap_url'];
-		return trailingslashit( $base ) . rawurlencode( (string) $s['cap_site_key'] ) . '/siteverify';
+	/** Endpoint WordPress uses for a Cap request (the server address as WordPress reaches it). */
+	private static function cap_server_url( array $s, string $action ): string {
+		return trailingslashit( $s['cap_url'] ) . rawurlencode( (string) $s['cap_site_key'] ) . '/' . $action;
+	}
+
+	/** Relay routes for the widget's challenge and redeem requests. */
+	public static function register_routes() {
+		foreach ( array( 'challenge', 'redeem' ) as $action ) {
+			register_rest_route(
+				Rest::NS,
+				'/cap/' . $action,
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( __CLASS__, 'relay_cap' ),
+					'permission_callback' => '__return_true',
+				)
+			);
+		}
+	}
+
+	/** Forwards a challenge or redeem request from the widget to the Cap server. */
+	public static function relay_cap( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! self::cap_enabled() ) {
+			return new \WP_REST_Response( array( 'error' => 'Cap is not enabled.' ), 404 );
+		}
+		$action = substr( $request->get_route(), strrpos( $request->get_route(), '/' ) + 1 );
+		$body   = (string) $request->get_body();
+		if ( strlen( $body ) > 65536 ) {
+			return new \WP_REST_Response( array( 'error' => 'Too large.' ), 413 );
+		}
+		$response = wp_remote_post(
+			self::cap_server_url( Settings::all(), $action ),
+			array(
+				'timeout' => 10,
+				'headers' => array(
+					'Content-Type'    => 'application/json',
+					// Cap rate-limits per visitor IP.
+					'X-Forwarded-For' => Plugin::client_ip(),
+				),
+				'body'    => '' === $body ? '{}' : $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			Log::error( 'cap.unreachable', 'Could not reach the Cap server: ' . $response->get_error_message() );
+			return new \WP_REST_Response( array( 'error' => 'Cap is not reachable.' ), 502 );
+		}
+		$out = new \WP_REST_Response( json_decode( wp_remote_retrieve_body( $response ), true ), (int) wp_remote_retrieve_response_code( $response ) );
+		$out->header( 'Cache-Control', 'no-store' );
+		return $out;
 	}
 
 	public static function client_config(): array {
@@ -188,7 +240,7 @@ class Protection {
 			return new \WP_Error( 'cap_missing', 'No CAPTCHA token was submitted.' );
 		}
 		$response = wp_remote_post(
-			self::cap_verify_url( Settings::all() ),
+			self::cap_server_url( Settings::all(), 'siteverify' ),
 			array(
 				'timeout' => 10,
 				'headers' => array( 'Content-Type' => 'application/json' ),
@@ -213,20 +265,22 @@ class Protection {
 	}
 
 	/**
-	 * Checks that the Cap server answers with the given settings.
+	 * Checks that the Cap server answers with the given settings. The made-up token has the shape of a
+	 * real one (site key first), because Cap only checks the keys after the token's shape; a valid key
+	 * pair then gets "Token not found".
 	 *
 	 * @return true|\WP_Error
 	 */
 	public static function test_cap( array $settings ) {
 		$response = wp_remote_post(
-			self::cap_verify_url( $settings ),
+			self::cap_server_url( $settings, 'siteverify' ),
 			array(
 				'timeout' => 10,
 				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode(
 					array(
 						'secret'   => $settings['cap_secret'],
-						'response' => 'connection-test',
+						'response' => $settings['cap_site_key'] . ':connection-test:0',
 					)
 				),
 			)
@@ -241,7 +295,7 @@ class Protection {
 			return new \WP_Error( 'cap_test', sprintf( __( 'The Cap server answered with HTTP %d but not with a verification result. Check the URL and site key.', 'nemvo-booking' ), $code ) );
 		}
 		if ( ! empty( $data['error'] ) && false !== stripos( (string) $data['error'], 'secret' ) ) {
-			return new \WP_Error( 'cap_test', __( 'The Cap server rejected the secret key.', 'nemvo-booking' ) );
+			return new \WP_Error( 'cap_test', __( 'The Cap server rejected the site key or the secret key.', 'nemvo-booking' ) );
 		}
 		return true;
 	}

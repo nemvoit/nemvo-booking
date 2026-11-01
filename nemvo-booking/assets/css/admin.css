@@ -70,6 +70,19 @@
 	margin: 6px 0 6px 1.5em;
 }
 
+.nb-test-result {
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+.nb-test-result.is-ok {
+	color: #00a32a;
+}
+
+.nb-test-result.is-error {
+	color: #d63638;
+}
+
 .nb-code {
 	background: #1d2327;
 	color: #f0f0f1;

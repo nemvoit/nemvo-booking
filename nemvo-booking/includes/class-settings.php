@@ -72,7 +72,7 @@ class Settings {
 			'blocklist'            => '',
 			'cap_enabled'          => 0,
 			'cap_url'              => '',
-			'cap_internal_url'     => '',
+			'cap_public_url'       => '',
 			'cap_site_key'         => '',
 			'cap_secret'           => '',
 			'cap_mode'             => 'visible',
@@ -170,6 +170,14 @@ class Settings {
 			if ( 'custom' !== $old ) {
 				$saved['holiday_custom'] = '';
 			}
+		}
+
+		// Up to 1.2.0 the Cap URL was the public address and the internal one was optional.
+		// Now the Cap URL is the address WordPress uses and the public one is optional.
+		if ( array_key_exists( 'cap_internal_url', $saved ) && ! isset( $saved['cap_public_url'] ) ) {
+			$saved['cap_public_url'] = (string) ( $saved['cap_url'] ?? '' );
+			$saved['cap_url']        = $saved['cap_internal_url'] ?: $saved['cap_public_url'];
+			unset( $saved['cap_internal_url'] );
 		}
 		return wp_parse_args( $saved, self::defaults() );
 	}

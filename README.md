@@ -205,7 +205,7 @@ The plugin sends no data to its author. It connects to:
 
 - **Google** (OAuth and the Calendar API), with your own OAuth client: to read when hosts are busy and which days are public holidays, and to create, move and cancel meetings with the booker's details.
 - **Gravatar**, only for hosts without a chosen photo, on booking pages that show host photos, when avatars are switched on under Settings → Discussion. The visitor's browser loads the image from Gravatar.
-- **Your own Cap server**, if you switch Cap on.
+- **Your own Cap server**, if you switch Cap on. By default visitors' browsers reach it through WordPress, so it can stay on an internal network.
 
 The details, with links to the services' terms, are in [readme.txt](nemvo-booking/readme.txt) under *External services*.
 
@@ -281,6 +281,11 @@ nemvo-booking/
 ```
 
 ## Changelog
+
+### 1.2.1
+
+- Cap: the server address is now the one WordPress uses, and a public address is optional. Without one, visitors' browsers talk to Cap through WordPress (`POST /wp-json/nemvo-booking/v1/cap/challenge` and `…/cap/redeem`), so Cap can stay on an internal network. Existing settings are carried over unchanged.
+- Cap: new "Test connection" button that checks the server address and keys before you save.
 
 ### 1.2.0
 
