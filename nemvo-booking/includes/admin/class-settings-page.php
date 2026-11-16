@@ -1,23 +1,42 @@
 <?php
+/**
+ * Settings screen.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
+use NemvoBooking\Crypto;
 use NemvoBooking\Employees;
 use NemvoBooking\Google;
 use NemvoBooking\Holidays;
 use NemvoBooking\Log;
 use NemvoBooking\Pages;
+use NemvoBooking\Plugin;
 use NemvoBooking\Protection;
 use NemvoBooking\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-class SettingsPage {
+/**
+ * Bookings → Settings.
+ */
+class Settings_Page {
 
+	/**
+	 * Registers the settings, the Cap test and the capability for saving.
+	 */
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
 		add_action( 'wp_ajax_nemvo_booking_cap_test', array( __CLASS__, 'ajax_cap_test' ) );
+		// options.php checks manage_options unless told otherwise; use the plugin's capability.
+		add_filter( 'option_page_capability_nemvo_booking', array( Plugin::class, 'capability' ) );
 	}
 
+	/**
+	 * Registers the settings option with its sanitize callback.
+	 */
 	public static function register() {
 		register_setting(
 			'nemvo_booking',
@@ -29,21 +48,28 @@ class SettingsPage {
 		);
 	}
 
+	/**
+	 * Sanitizes the settings form and tests the Cap connection when Cap is on.
+	 *
+	 * @param mixed $input Submitted settings.
+	 * @return array Settings to store.
+	 */
 	public static function sanitize( $input ): array {
 		$input = is_array( $input ) ? $input : array();
 		$d     = Settings::defaults();
+		$old   = Settings::all();
 		$out   = array(
 			'google_client_id'     => sanitize_text_field( $input['google_client_id'] ?? '' ),
-			'google_client_secret' => sanitize_text_field( $input['google_client_secret'] ?? '' ),
+			'google_client_secret' => self::secret( $input['google_client_secret'] ?? '', $old['google_client_secret'] ),
 			'invite_mode'          => in_array( $input['invite_mode'] ?? '', array( 'google', 'wordpress' ), true ) ? $input['invite_mode'] : 'google',
-			'event_description'    => sanitize_textarea_field( $input['event_description'] ?? '' ) ?: $d['event_description'],
+			'event_description'    => Plugin::fallback( sanitize_textarea_field( $input['event_description'] ?? '' ), $d['event_description'] ),
 			'holiday_calendars'    => array_values( array_intersect( array_map( 'sanitize_text_field', (array) ( $input['holiday_calendars'] ?? array() ) ), array_keys( Holidays::calendars() ) ) ),
 			'holiday_custom'       => sanitize_textarea_field( $input['holiday_custom'] ?? '' ),
 			'include_observances'  => empty( $input['include_observances'] ) ? 0 : 1,
 			'blocked_dates'        => sanitize_textarea_field( $input['blocked_dates'] ?? '' ),
 			'from_name'            => sanitize_text_field( $input['from_name'] ?? '' ),
 			'from_email'           => sanitize_email( $input['from_email'] ?? '' ),
-			'accent_color'         => sanitize_hex_color( $input['accent_color'] ?? '' ) ?: $d['accent_color'],
+			'accent_color'         => Plugin::fallback( sanitize_hex_color( $input['accent_color'] ?? '' ), $d['accent_color'] ),
 			'time_format'          => '12' === ( $input['time_format'] ?? '' ) ? '12' : '24',
 			'week_numbers'         => empty( $input['week_numbers'] ) ? 0 : 1,
 			'log_retention_days'   => max( 0, absint( $input['log_retention_days'] ?? 365 ) ),
@@ -57,26 +83,39 @@ class SettingsPage {
 			'cap_url'              => untrailingslashit( esc_url_raw( $input['cap_url'] ?? '' ) ),
 			'cap_public_url'       => untrailingslashit( esc_url_raw( $input['cap_public_url'] ?? '' ) ),
 			'cap_site_key'         => sanitize_text_field( $input['cap_site_key'] ?? '' ),
-			'cap_secret'           => sanitize_text_field( $input['cap_secret'] ?? '' ),
+			'cap_secret'           => self::secret( $input['cap_secret'] ?? '', $old['cap_secret'] ),
 			'cap_mode'             => 'invisible' === ( $input['cap_mode'] ?? '' ) ? 'invisible' : 'visible',
-			'cap_script_url'       => esc_url_raw( $input['cap_script_url'] ?? '' ),
 			'alert_email'          => implode( ', ', array_filter( array_map( 'sanitize_email', explode( ',', (string) ( $input['alert_email'] ?? '' ) ) ), 'is_email' ) ),
 			'alert_employee'       => empty( $input['alert_employee'] ) ? 0 : 1,
 			'privacy_consent'      => empty( $input['privacy_consent'] ) ? 0 : 1,
-			'privacy_text'         => sanitize_text_field( $input['privacy_text'] ?? '' ) ?: $d['privacy_text'],
+			'privacy_text'         => Plugin::fallback( sanitize_text_field( $input['privacy_text'] ?? '' ), $d['privacy_text'] ),
 			'retention_days'       => min( 3650, absint( $input['retention_days'] ?? 0 ) ),
 		);
 		foreach ( array_keys( Settings::email_types() ) as $type ) {
 			$out[ "email_{$type}_enabled" ] = empty( $input[ "email_{$type}_enabled" ] ) ? 0 : 1;
-			$out[ "email_{$type}_subject" ] = sanitize_text_field( $input[ "email_{$type}_subject" ] ?? '' ) ?: $d[ "email_{$type}_subject" ];
-			$out[ "email_{$type}_body" ]    = wp_kses_post( $input[ "email_{$type}_body" ] ?? '' ) ?: $d[ "email_{$type}_body" ];
+			$out[ "email_{$type}_subject" ] = Plugin::fallback( sanitize_text_field( $input[ "email_{$type}_subject" ] ?? '' ), $d[ "email_{$type}_subject" ] );
+			$out[ "email_{$type}_body" ]    = Plugin::fallback( wp_kses_post( $input[ "email_{$type}_body" ] ?? '' ), $d[ "email_{$type}_body" ] );
+		}
+
+		// A secret without the setting it belongs to is of no use: clear it with its ID or key.
+		if ( '' === $out['google_client_id'] ) {
+			$out['google_client_secret'] = '';
+		}
+		if ( '' === $out['cap_site_key'] ) {
+			$out['cap_secret'] = '';
 		}
 
 		// Clear cached holidays when the source changes.
-		$old = Settings::all();
 		if ( $old['holiday_calendars'] !== $out['holiday_calendars'] || $old['holiday_custom'] !== $out['holiday_custom'] || (int) $old['include_observances'] !== $out['include_observances'] ) {
 			global $wpdb;
-			$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_nemvo\\_booking\\_hol\\_%' OR option_name LIKE '\\_transient\\_timeout\\_nemvo\\_booking\\_hol\\_%'" );
+			// The cache keys include a hash of the calendars, so the entries are found by prefix.
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- no API deletes transients by prefix.
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+					$wpdb->esc_like( '_transient_nemvo_booking_hol_' ) . '%',
+					$wpdb->esc_like( '_transient_timeout_nemvo_booking_hol_' ) . '%'
+				)
+			);
 		}
 		if ( $old['google_client_id'] !== $out['google_client_id'] ) {
 			Log::info( 'settings.google', 'Google OAuth client settings were changed.' );
@@ -89,7 +128,7 @@ class SettingsPage {
 			if ( ! $out['cap_url'] || ! $out['cap_site_key'] || ! $out['cap_secret'] ) {
 				add_settings_error( Settings::OPTION, 'cap', __( 'Cap is enabled but the server address, site key or secret key is missing, so Cap is not used yet.', 'nemvo-booking' ) );
 			} else {
-				$result = Protection::test_cap( $out );
+				$result = Protection::test_cap( array_merge( $out, array( 'cap_secret' => Crypto::is_encrypted( $out['cap_secret'] ) ? $old['cap_secret'] : $out['cap_secret'] ) ) );
 				if ( is_wp_error( $result ) ) {
 					/* translators: %s: error message */
 					add_settings_error( Settings::OPTION, 'cap', sprintf( __( 'Could not verify the Cap connection: %s', 'nemvo-booking' ), $result->get_error_message() ) );
@@ -101,10 +140,12 @@ class SettingsPage {
 		return $out;
 	}
 
-	/** "Test connection" button: checks the Cap fields as they are in the form, before saving. */
+	/**
+	 * "Test connection" button: checks the Cap fields as they are in the form, before saving.
+	 */
 	public static function ajax_cap_test() {
 		check_ajax_referer( 'nemvo_booking_cap_test' );
-		if ( ! current_user_can( Admin::CAP ) ) {
+		if ( ! current_user_can( Plugin::capability() ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not allowed to do this.', 'nemvo-booking' ) ), 403 );
 		}
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash() is applied below.
@@ -114,6 +155,10 @@ class SettingsPage {
 			'cap_secret'   => sanitize_text_field( wp_unslash( $_POST['secret'] ?? '' ) ),
 		);
 		// phpcs:enable
+		// The saved secret isn't shown in the form; an empty field means "the saved one".
+		if ( '' === $settings['cap_secret'] ) {
+			$settings['cap_secret'] = (string) Settings::get( 'cap_secret' );
+		}
 		if ( ! $settings['cap_url'] || ! $settings['cap_site_key'] || ! $settings['cap_secret'] ) {
 			wp_send_json_error( array( 'message' => __( 'Enter the server address, site key and secret key first.', 'nemvo-booking' ) ) );
 		}
@@ -125,10 +170,35 @@ class SettingsPage {
 		wp_send_json_success( array( 'message' => __( 'Cap is reachable and accepts the keys.', 'nemvo-booking' ) ) );
 	}
 
+	/**
+	 * A secret from the form. The saved value is never printed into the page, so an empty field
+	 * keeps it.
+	 *
+	 * @param mixed  $value Submitted value.
+	 * @param string $saved Currently saved secret, in plain text.
+	 * @return string The secret to store.
+	 */
+	private static function secret( $value, string $saved ): string {
+		$value = trim( sanitize_text_field( (string) $value ) );
+		if ( Crypto::is_encrypted( $value ) ) {
+			return $value; // Already stored (WordPress sanitizes a new option twice).
+		}
+		return '' === $value ? $saved : $value;
+	}
+
+	/**
+	 * Form field name of a setting.
+	 *
+	 * @param string $key Setting name.
+	 * @return string
+	 */
 	private static function name( string $key ): string {
 		return Settings::OPTION . '[' . $key . ']';
 	}
 
+	/**
+	 * Renders Bookings → Settings.
+	 */
 	public static function render() {
 		$s         = Settings::all();
 		$defaults  = Settings::defaults();
@@ -259,7 +329,7 @@ class SettingsPage {
 						<tr>
 							<th scope="row"><label for="nb-client-secret"><?php esc_html_e( 'Client secret', 'nemvo-booking' ); ?></label></th>
 							<td>
-								<input type="password" id="nb-client-secret" class="regular-text code" name="<?php echo esc_attr( self::name( 'google_client_secret' ) ); ?>" value="<?php echo esc_attr( $s['google_client_secret'] ); ?>" placeholder="GOCSPX-…" autocomplete="new-password">
+								<input type="password" id="nb-client-secret" class="regular-text code" name="<?php echo esc_attr( self::name( 'google_client_secret' ) ); ?>" value="" placeholder="<?php echo esc_attr( '' === $s['google_client_secret'] ? 'GOCSPX-…' : __( 'Saved – leave empty to keep it', 'nemvo-booking' ) ); ?>" autocomplete="new-password">
 								<p class="description"><?php esc_html_e( 'Changing the client later requires all employees to reconnect.', 'nemvo-booking' ); ?></p>
 							</td>
 						</tr>
@@ -298,7 +368,7 @@ class SettingsPage {
 							<span class="description"><?php esc_html_e( 'Google emails the invitation from the organizing host\'s calendar to the booker, guests and other hosts, with the Meet link, time and the invitation text below. Updates and cancellations also come from Google. Accept/decline answers show up in the host\'s calendar. WordPress only emails the organizing host (Google doesn\'t notify the organizer of their own event), using the host emails below.', 'nemvo-booking' ); ?></span>
 						</label>
 						<label>
-							<input type="radio" name="<?php echo esc_attr( self::name( 'invite_mode' ) ); ?>" value="wordpress" <?php checked( $s['invite_mode'], 'wordpress' ); ?>>
+							<input type="radio" name="<?php echo esc_attr( self::name( 'invite_mode' ) ); ?>" value="wordpress" <?php checked( $s['invite_mode'], 'wordpress' ); // phpcs:ignore WordPress.WP.CapitalPDangit.MisspelledInText -- a setting value. ?>>
 							<strong><?php esc_html_e( 'Sent by WordPress', 'nemvo-booking' ); ?></strong><br>
 							<span class="description"><?php esc_html_e( 'Google sends nothing. Instead, each person gets one of the emails below with the invitation (.ics) attached, which Gmail, Outlook and Apple Mail show with Accept/Decline buttons. Use this if you want all email to come from this website and to fully control the wording. Make sure WordPress can send email reliably (e.g. with WP Mail SMTP).', 'nemvo-booking' ); ?></span>
 						</label>
@@ -491,34 +561,34 @@ class SettingsPage {
 							<li>
 								<?php esc_html_e( 'On a server with Docker, create a folder with a file named docker-compose.yml containing:', 'nemvo-booking' ); ?>
 <pre class="nb-code">services:
-  cap:
-    image: tiago2/cap:latest
-    container_name: cap
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      ADMIN_KEY: "<?php esc_html_e( 'replace-with-a-random-string-of-at-least-32-characters', 'nemvo-booking' ); ?>"
-      REDIS_URL: redis://valkey:6379
-    depends_on:
-      valkey:
-        condition: service_healthy
+	cap:
+	image: tiago2/cap:latest
+	container_name: cap
+	restart: unless-stopped
+	ports:
+		- "3000:3000"
+	environment:
+		ADMIN_KEY: "<?php esc_html_e( 'replace-with-a-random-string-of-at-least-32-characters', 'nemvo-booking' ); ?>"
+		REDIS_URL: redis://valkey:6379
+	depends_on:
+		valkey:
+		condition: service_healthy
 
-  valkey:
-    image: valkey/valkey:9-alpine
-    container_name: cap-valkey
-    restart: unless-stopped
-    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
-    volumes:
-      - valkey-data:/data
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+	valkey:
+	image: valkey/valkey:9-alpine
+	container_name: cap-valkey
+	restart: unless-stopped
+	command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
+	volumes:
+		- valkey-data:/data
+	healthcheck:
+		test: ["CMD", "valkey-cli", "ping"]
+		interval: 5s
+		timeout: 3s
+		retries: 5
 
 volumes:
-  valkey-data:</pre>
+	valkey-data:</pre>
 								<?php
 								printf(
 									/* translators: %s: command */
@@ -573,7 +643,7 @@ volumes:
 						<tr>
 							<th scope="row"><label for="nb-cap-secret"><?php esc_html_e( 'Secret key', 'nemvo-booking' ); ?></label></th>
 							<td>
-								<input type="password" id="nb-cap-secret" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_secret' ) ); ?>" value="<?php echo esc_attr( $s['cap_secret'] ); ?>" autocomplete="new-password">
+								<input type="password" id="nb-cap-secret" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_secret' ) ); ?>" value="" placeholder="<?php echo esc_attr( '' === $s['cap_secret'] ? '' : __( 'Saved – leave empty to keep it', 'nemvo-booking' ) ); ?>" autocomplete="new-password">
 								<p class="description"><?php esc_html_e( 'The site key\'s secret – not the dashboard admin key.', 'nemvo-booking' ); ?></p>
 							</td>
 						</tr>
@@ -592,21 +662,6 @@ volumes:
 									<label><input type="radio" name="<?php echo esc_attr( self::name( 'cap_mode' ) ); ?>" value="visible" <?php checked( $s['cap_mode'], 'visible' ); ?>> <strong><?php esc_html_e( 'Visible', 'nemvo-booking' ); ?></strong> – <span class="description"><?php esc_html_e( 'An "I\'m a human" box above the booking button that the visitor clicks.', 'nemvo-booking' ); ?></span></label>
 									<label><input type="radio" name="<?php echo esc_attr( self::name( 'cap_mode' ) ); ?>" value="invisible" <?php checked( $s['cap_mode'], 'invisible' ); ?>> <strong><?php esc_html_e( 'Invisible', 'nemvo-booking' ); ?></strong> – <span class="description"><?php esc_html_e( 'The puzzle is solved in the background when the visitor clicks "Confirm booking".', 'nemvo-booking' ); ?></span></label>
 								</fieldset>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="nb-cap-script"><?php esc_html_e( 'Widget script URL (optional)', 'nemvo-booking' ); ?></label></th>
-							<td>
-								<input type="url" id="nb-cap-script" class="regular-text code" name="<?php echo esc_attr( self::name( 'cap_script_url' ) ); ?>" value="<?php echo esc_attr( $s['cap_script_url'] ); ?>" placeholder="https://cap.example.com/assets/widget.js">
-								<p class="description">
-									<?php
-									printf(
-										/* translators: %s: Cap widget version */
-										esc_html__( 'Leave empty to use the Cap widget that comes with this plugin (version %s), so visitors load nothing from elsewhere. To use the widget from your own Cap server instead, start Cap with ENABLE_ASSETS_SERVER=true and enter its /assets/widget.js address. The widget then loads its WASM files from the same folder.', 'nemvo-booking' ),
-										esc_html( Protection::CAP_VERSION )
-									);
-									?>
-								</p>
 							</td>
 						</tr>
 					</table>
@@ -660,6 +715,12 @@ volumes:
 		<?php
 	}
 
+	/**
+	 * A copy field as wide as the settings table.
+	 *
+	 * @param string $value Text to copy.
+	 * @return string HTML.
+	 */
 	private static function copy_field_html( string $value ): string {
 		return Admin::copy_field( $value, 'large-text' );
 	}

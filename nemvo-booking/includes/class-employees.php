@@ -1,20 +1,41 @@
 <?php
+/**
+ * Employees.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
+
+// Bookings, employees and the log live in the plugin's own tables, which have no WordPress API.
+// Queries are prepared; results that are read repeatedly in a request are cached in the class.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Employees (hosts) and their Google Calendar connection.
  */
 class Employees {
 
+	/**
+	 * All employees, by name.
+	 *
+	 * @return array[]
+	 */
 	public static function all(): array {
 		global $wpdb;
 		$table = Plugin::table( 'employees' );
 		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY name ASC', $table ), ARRAY_A );
-		return array_map( array( __CLASS__, 'hydrate' ), $rows ?: array() );
+		return array_map( array( __CLASS__, 'hydrate' ), $rows ? $rows : array() );
 	}
 
+	/**
+	 * An employee by ID.
+	 *
+	 * @param int $id Employee ID.
+	 * @return array|null
+	 */
 	public static function get( int $id ): ?array {
 		global $wpdb;
 		$table = Plugin::table( 'employees' );
@@ -22,7 +43,12 @@ class Employees {
 		return $row ? self::hydrate( $row ) : null;
 	}
 
-	/** @return array[] Employees for the given IDs, in the given order, skipping missing ones. */
+	/**
+	 * Employees for the given IDs, in the given order, skipping missing ones.
+	 *
+	 * @param int[] $ids Employee IDs.
+	 * @return array[]
+	 */
 	public static function many( array $ids ): array {
 		$out = array();
 		foreach ( $ids as $id ) {
@@ -34,14 +60,27 @@ class Employees {
 		return $out;
 	}
 
+	/**
+	 * Converts a database row: numbers and decoded calendar lists.
+	 *
+	 * @param array $row Database row.
+	 * @return array Employee.
+	 */
 	private static function hydrate( array $row ): array {
 		$row['id']             = (int) $row['id'];
 		$row['photo_id']       = (int) ( $row['photo_id'] ?? 0 );
-		$row['calendars']      = json_decode( (string) $row['calendars'], true ) ?: array();
-		$row['busy_calendars'] = json_decode( (string) $row['busy_calendars'], true ) ?: array();
+		$row['calendars']      = Plugin::fallback( json_decode( (string) $row['calendars'], true ), array() );
+		$row['busy_calendars'] = Plugin::fallback( json_decode( (string) $row['busy_calendars'], true ), array() );
 		return $row;
 	}
 
+	/**
+	 * Adds an employee.
+	 *
+	 * @param string $name  Name shown to visitors.
+	 * @param string $email Email for notifications.
+	 * @return int New employee ID.
+	 */
 	public static function create( string $name, string $email ): int {
 		global $wpdb;
 		$wpdb->insert(
@@ -55,6 +94,12 @@ class Employees {
 		return (int) $wpdb->insert_id;
 	}
 
+	/**
+	 * Updates columns of an employee. Calendar lists may be given as arrays.
+	 *
+	 * @param int   $id   Employee ID.
+	 * @param array $data Column => value.
+	 */
 	public static function update( int $id, array $data ) {
 		global $wpdb;
 		foreach ( array( 'calendars', 'busy_calendars' ) as $json ) {
@@ -65,15 +110,31 @@ class Employees {
 		$wpdb->update( Plugin::table( 'employees' ), $data, array( 'id' => $id ) );
 	}
 
+	/**
+	 * Deletes an employee.
+	 *
+	 * @param int $id Employee ID.
+	 */
 	public static function delete( int $id ) {
 		global $wpdb;
 		$wpdb->delete( Plugin::table( 'employees' ), array( 'id' => $id ) );
 	}
 
+	/**
+	 * Whether the employee has connected a Google Calendar.
+	 *
+	 * @param array $employee Employee.
+	 * @return bool
+	 */
 	public static function is_connected( array $employee ): bool {
 		return '' !== (string) $employee['refresh_token'];
 	}
 
+	/**
+	 * Revokes the Google access and forgets the tokens.
+	 *
+	 * @param array $employee Employee.
+	 */
 	public static function disconnect( array $employee ) {
 		Google::revoke( $employee );
 		self::update(
@@ -88,22 +149,43 @@ class Employees {
 		);
 	}
 
-	/** Calendar IDs checked for conflicts. Defaults to the primary calendar. */
+	/**
+	 * Calendar IDs checked for conflicts. Defaults to the primary calendar.
+	 *
+	 * @param array $employee Employee.
+	 * @return string[]
+	 */
 	public static function busy_calendars( array $employee ): array {
-		return $employee['busy_calendars'] ?: array( 'primary' );
+		return $employee['busy_calendars'] ? $employee['busy_calendars'] : array( 'primary' );
 	}
 
-	/** Calendar where new meetings are created. */
+	/**
+	 * Calendar where new meetings are created.
+	 *
+	 * @param array $employee Employee.
+	 * @return string Calendar ID.
+	 */
 	public static function target_calendar( array $employee ): string {
-		return $employee['target_calendar'] ?: 'primary';
+		return $employee['target_calendar'] ? $employee['target_calendar'] : 'primary';
 	}
 
-	/** Email used as organizer/attendee address for this employee. */
+	/**
+	 * Email used as organizer/attendee address for this employee.
+	 *
+	 * @param array $employee Employee.
+	 * @return string
+	 */
 	public static function calendar_email( array $employee ): string {
-		return $employee['google_email'] ?: $employee['email'];
+		return $employee['google_email'] ? $employee['google_email'] : $employee['email'];
 	}
 
-	/** @return true|\WP_Error */
+	/**
+	 * Reads the employee's calendar list from Google and keeps the conflict and target calendars valid.
+	 * On the first connection every calendar the employee owns is checked for conflicts.
+	 *
+	 * @param array $employee Employee.
+	 * @return true|\WP_Error
+	 */
 	public static function refresh_calendars( array $employee ) {
 		$calendars = Google::calendar_list( $employee );
 		if ( is_wp_error( $calendars ) ) {
@@ -118,7 +200,7 @@ class Employees {
 		}
 
 		// First connection: check all calendars the employee owns for conflicts.
-		$ids = wp_list_pluck( $calendars, 'id' );
+		$ids  = wp_list_pluck( $calendars, 'id' );
 		$busy = array_values( array_intersect( $employee['busy_calendars'], $ids ) );
 		if ( ! $busy ) {
 			foreach ( $calendars as $cal ) {
@@ -137,7 +219,12 @@ class Employees {
 		return true;
 	}
 
-	/** Creates a link the employee can open to connect their own Google account. Valid for 7 days. */
+	/**
+	 * Creates a link the employee can open to connect their own Google account. Valid for 7 days.
+	 *
+	 * @param array $employee Employee.
+	 * @return string URL.
+	 */
 	public static function connect_link( array $employee ): string {
 		$token = wp_generate_password( 32, false );
 		self::update(
@@ -157,6 +244,13 @@ class Employees {
 		);
 	}
 
+	/**
+	 * Whether a connect link token is the employee's current one and hasn't expired.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $token Token from the link.
+	 * @return bool
+	 */
 	public static function connect_token_valid( array $employee, string $token ): bool {
 		return '' !== $token
 			&& '' !== $employee['connect_token']
@@ -164,7 +258,12 @@ class Employees {
 			&& hash_equals( $employee['connect_token'], $token );
 	}
 
-	/** Booking page titles (published) that use this employee. */
+	/**
+	 * Booking page titles (published) that use this employee.
+	 *
+	 * @param array $employee Employee.
+	 * @return string[]
+	 */
 	public static function page_titles( array $employee ): array {
 		$titles = array();
 		foreach ( Pages::published() as $id => $title ) {
@@ -179,6 +278,9 @@ class Employees {
 	 * Records a Google problem. Network hiccups and Google outages fix themselves, so only
 	 * authorization and configuration errors count, and people are alerted once when a
 	 * working connection breaks.
+	 *
+	 * @param array     $employee Employee.
+	 * @param \WP_Error $error Error from Google.
 	 */
 	public static function report_problem( array $employee, \WP_Error $error ) {
 		$status = (int) ( $error->get_error_data()['status'] ?? 0 );
@@ -202,7 +304,11 @@ class Employees {
 		self::send_alert( $current, $message );
 	}
 
-	/** Clears a recorded problem after a successful Google request. */
+	/**
+	 * Clears a recorded problem after a successful Google request.
+	 *
+	 * @param array $employee Employee.
+	 */
 	public static function report_ok( array $employee ) {
 		if ( '' === (string) ( $employee['last_error'] ?? '' ) ) {
 			return;
@@ -211,7 +317,12 @@ class Employees {
 		Log::info( 'google.connection_restored', sprintf( 'Google Calendar connection for %s works again.', $employee['name'] ), array( 'employee_id' => $employee['id'] ) );
 	}
 
-	/** Tells the admin (and the employee) how to fix a broken connection. */
+	/**
+	 * Tells the admin (and the employee) how to fix a broken connection.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $error Error message from Google.
+	 */
 	private static function send_alert( array $employee, string $error ) {
 		$pages   = self::page_titles( $employee );
 		$link    = self::connect_link( $employee );
@@ -221,7 +332,7 @@ class Employees {
 			get_bloginfo( 'name' ),
 			$employee['name']
 		);
-		$html  = '<p>' . sprintf(
+		$html = '<p>' . sprintf(
 			/* translators: %s: employee name */
 			esc_html__( 'The Google Calendar connection for %s has stopped working.', 'nemvo-booking' ),
 			'<strong>' . esc_html( $employee['name'] ) . '</strong>'
@@ -250,7 +361,9 @@ class Employees {
 		}
 	}
 
-	/** Daily check, so a broken connection is noticed even when nobody visits the booking pages. */
+	/**
+	 * Daily check, so a broken connection is noticed even when nobody visits the booking pages.
+	 */
 	public static function health_check() {
 		if ( ! Google::is_configured() ) {
 			return;
@@ -262,15 +375,35 @@ class Employees {
 		}
 	}
 
-	/** Picture for wp-admin: the chosen photo, else the WordPress avatar with a placeholder. */
+	/**
+	 * Picture for wp-admin: the chosen photo, else the WordPress avatar (Gravatar) when avatars are
+	 * switched on under Settings → Discussion, else a placeholder that ships with the plugin.
+	 *
+	 * @param array $employee Employee.
+	 * @return string Image URL.
+	 */
 	public static function avatar( array $employee ): string {
-		return self::chosen_photo( $employee ) ?: self::gravatar( $employee, 'mp' );
+		return Plugin::fallback( self::chosen_photo( $employee ), self::placeholder( $employee ) );
+	}
+
+	/**
+	 * Picture shown for an employee without a chosen photo in wp-admin.
+	 *
+	 * @param array $employee Employee.
+	 * @return string Image URL: Gravatar with its "mystery person" default when avatars are on,
+	 *                otherwise the plugin's own placeholder, so nothing is loaded from Gravatar.
+	 */
+	public static function placeholder( array $employee ): string {
+		return get_option( 'show_avatars' ) ? self::gravatar( $employee, 'mp' ) : NEMVO_BOOKING_URL . 'assets/images/person.svg';
 	}
 
 	/**
 	 * Photo shown on booking pages: the one chosen under Employees, else the WordPress avatar
 	 * (Gravatar) when avatars are switched on under Settings → Discussion. Gravatar's "404"
 	 * default lets the widget drop hosts that have no picture.
+	 *
+	 * @param array $employee Employee.
+	 * @return string Image URL, or '' for none.
 	 */
 	public static function photo( array $employee ): string {
 		$photo = self::chosen_photo( $employee );
@@ -280,10 +413,23 @@ class Employees {
 		return $photo;
 	}
 
+	/**
+	 * The photo chosen under Bookings → Employees.
+	 *
+	 * @param array $employee Employee.
+	 * @return string Thumbnail URL, or ''.
+	 */
 	private static function chosen_photo( array $employee ): string {
 		return $employee['photo_id'] ? (string) wp_get_attachment_image_url( $employee['photo_id'], 'thumbnail' ) : '';
 	}
 
+	/**
+	 * The employee's avatar URL (Gravatar unless a plugin changes it).
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $fallback Gravatar default image, e.g. mp or 404.
+	 * @return string
+	 */
 	private static function gravatar( array $employee, string $fallback ): string {
 		return (string) get_avatar_url(
 			$employee['email'],

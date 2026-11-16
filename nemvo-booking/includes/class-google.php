@@ -1,4 +1,10 @@
 <?php
+/**
+ * Google OAuth and Calendar API client.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
@@ -14,6 +20,9 @@ class Google {
 	const API        = 'https://www.googleapis.com/calendar/v3';
 	const SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events';
 
+	/**
+	 * Hooks in the OAuth callback and the connect link handler (both also work without a login).
+	 */
 	public static function init() {
 		add_action( 'admin_post_nemvo_booking_oauth', array( __CLASS__, 'handle_callback' ) );
 		add_action( 'admin_post_nopriv_nemvo_booking_oauth', array( __CLASS__, 'handle_callback' ) );
@@ -21,16 +30,31 @@ class Google {
 		add_action( 'admin_post_nopriv_nemvo_booking_connect', array( __CLASS__, 'handle_connect_link' ) );
 	}
 
+	/**
+	 * Whether a Client ID and Client secret are saved.
+	 *
+	 * @return bool
+	 */
 	public static function is_configured(): bool {
 		return '' !== Settings::get( 'google_client_id' ) && '' !== Settings::get( 'google_client_secret' );
 	}
 
+	/**
+	 * The OAuth redirect URI to register in Google Cloud.
+	 *
+	 * @return string
+	 */
 	public static function redirect_uri(): string {
 		return admin_url( 'admin-post.php?action=nemvo_booking_oauth' );
 	}
 
 	/**
-	 * @param string $mode 'admin' (started from wp-admin) or 'link' (employee used a connect link).
+	 * Google's consent screen URL for connecting an employee's calendar.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $mode       'admin' (started from wp-admin) or 'link' (employee used a connect link).
+	 * @param string $link_token Connect link token, for mode 'link'.
+	 * @return string URL.
 	 */
 	public static function auth_url( array $employee, string $mode, string $link_token = '' ): string {
 		$state = Crypto::sign(
@@ -60,7 +84,10 @@ class Google {
 		return (string) apply_filters( 'nemvo_booking_google_auth_url', $url, $params );
 	}
 
-	/** Entry point for links sent to employees so they can connect without a WordPress login. */
+	/**
+	 * Entry point for links sent to employees so they can connect without a WordPress login.
+	 * The token in the link is the credential; it is checked against the employee's current one.
+	 */
 	public static function handle_connect_link() {
 		$id       = isset( $_GET['e'] ) ? absint( $_GET['e'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$token    = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
@@ -74,6 +101,10 @@ class Google {
 		exit;
 	}
 
+	/**
+	 * OAuth redirect target: checks the signed state, then exchanges the code for tokens.
+	 * Started from wp-admin it needs the plugin's capability; from a connect link it needs a valid link token.
+	 */
 	public static function handle_callback() {
 		// phpcs:disable WordPress.Security.NonceVerification -- OAuth state is HMAC-signed.
 		$state    = Crypto::verify( isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '' );
@@ -84,7 +115,7 @@ class Google {
 		}
 
 		$is_admin = 'admin' === $state['m'];
-		if ( $is_admin && ! current_user_can( 'manage_options' ) ) {
+		if ( $is_admin && ! current_user_can( Plugin::capability() ) ) {
 			self::message_page( __( 'Connection failed', 'nemvo-booking' ), __( 'You are not allowed to do this.', 'nemvo-booking' ), 403 );
 		}
 		if ( ! $is_admin && ! Employees::connect_token_valid( $employee, (string) $state['t'] ) ) {
@@ -108,7 +139,7 @@ class Google {
 
 		if ( $is_admin ) {
 			$url = admin_url( 'admin.php?page=nemvo-booking-employees&edit=' . $employee['id'] );
-			$url = add_query_arg( $error ? array( 'nb_error' => rawurlencode( $error ) ) : array( 'nb_notice' => 'connected' ), $url );
+			$url = add_query_arg( $error ? array( 'nemvo_booking_error' => rawurlencode( $error ) ) : array( 'nemvo_booking_notice' => 'connected' ), $url );
 			wp_safe_redirect( $url );
 			exit;
 		}
@@ -120,7 +151,13 @@ class Google {
 		self::message_page( __( 'Google Calendar connected', 'nemvo-booking' ), __( 'Thank you! Your calendar is now connected and you can close this window.', 'nemvo-booking' ), 200 );
 	}
 
-	/** @return true|\WP_Error */
+	/**
+	 * Exchanges an authorization code for tokens, stores them encrypted and reads the calendar list.
+	 *
+	 * @param string $code     Authorization code from Google.
+	 * @param array  $employee Employee.
+	 * @return true|\WP_Error
+	 */
 	private static function exchange_code( string $code, array $employee ) {
 		$response = wp_remote_post(
 			self::TOKEN_URL,
@@ -135,7 +172,7 @@ class Google {
 				),
 			)
 		);
-		$data = self::decode( $response );
+		$data     = self::decode( $response );
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
@@ -164,14 +201,18 @@ class Google {
 
 		Log::info(
 			'google.connected',
-			/* translators: 1: employee name, 2: Google account */
 			sprintf( 'Google Calendar connected for %1$s (%2$s).', $employee['name'], $employee['google_email'] ),
 			array( 'employee_id' => $employee['id'] )
 		);
 		return true;
 	}
 
-	/** @return string|\WP_Error */
+	/**
+	 * A valid access token, refreshed with the refresh token when it has expired.
+	 *
+	 * @param array $employee Employee.
+	 * @return string|\WP_Error
+	 */
 	public static function access_token( array $employee ) {
 		if ( (int) $employee['token_expires'] > time() ) {
 			$token = Crypto::decrypt( $employee['access_token'] );
@@ -197,7 +238,7 @@ class Google {
 				),
 			)
 		);
-		$data = self::decode( $response );
+		$data     = self::decode( $response );
 		if ( is_wp_error( $data ) ) {
 			Employees::report_problem( $employee, $data );
 			return $data;
@@ -213,7 +254,16 @@ class Google {
 		return $data['access_token'];
 	}
 
-	/** @return array|\WP_Error */
+	/**
+	 * Calls the Google Calendar API as the employee and records whether their connection works.
+	 *
+	 * @param array      $employee Employee.
+	 * @param string     $method HTTP method.
+	 * @param string     $path   Path below the API base URL.
+	 * @param array      $query  Query parameters.
+	 * @param array|null $body   JSON body.
+	 * @return array|\WP_Error Decoded response.
+	 */
 	public static function request( array $employee, string $method, string $path, array $query = array(), ?array $body = null ) {
 		$token = self::access_token( $employee );
 		if ( is_wp_error( $token ) ) {
@@ -250,7 +300,12 @@ class Google {
 		return $result;
 	}
 
-	/** @return array|\WP_Error */
+	/**
+	 * Decodes a Google response, turning HTTP errors into WP_Error with the status.
+	 *
+	 * @param array|\WP_Error $response Response from wp_remote_*().
+	 * @return array|\WP_Error
+	 */
 	private static function decode( $response ) {
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -264,15 +319,32 @@ class Google {
 		return is_array( $data ) ? $data : array();
 	}
 
+	/**
+	 * API path of a calendar.
+	 *
+	 * @param string $calendar_id Calendar ID.
+	 * @return string
+	 */
 	private static function cal_path( string $calendar_id ): string {
 		return '/calendars/' . rawurlencode( $calendar_id );
 	}
 
+	/**
+	 * A Unix timestamp in RFC 3339 format (UTC).
+	 *
+	 * @param int $ts Unix timestamp.
+	 * @return string
+	 */
 	public static function rfc3339( int $ts ): string {
 		return gmdate( 'Y-m-d\TH:i:s\Z', $ts );
 	}
 
-	/** @return array|\WP_Error List of calendars. */
+	/**
+	 * The employee's calendars.
+	 *
+	 * @param array $employee Employee.
+	 * @return array|\WP_Error List of calendars with id, summary, primary and role.
+	 */
 	public static function calendar_list( array $employee ) {
 		$data = self::request( $employee, 'GET', '/users/me/calendarList', array( 'maxResults' => 250 ) );
 		if ( is_wp_error( $data ) ) {
@@ -294,6 +366,9 @@ class Google {
 	 * Busy intervals across the employee's conflict calendars. Google's free/busy
 	 * only reports events marked "Busy", so free all-day events don't block.
 	 *
+	 * @param array $employee Employee.
+	 * @param int   $from     Range start (Unix timestamp).
+	 * @param int   $to       Range end (Unix timestamp).
 	 * @return array|\WP_Error List of [start_ts, end_ts].
 	 */
 	public static function free_busy( array $employee, int $from, int $to ) {
@@ -339,7 +414,15 @@ class Google {
 		return $busy;
 	}
 
-	/** @return array|\WP_Error Created event. */
+	/**
+	 * Creates an event with a Google Meet link, waiting briefly if the link isn't ready yet.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $calendar_id  Calendar ID.
+	 * @param array  $event        Event resource.
+	 * @param bool   $send_updates Whether Google emails the attendees.
+	 * @return array|\WP_Error Created event.
+	 */
 	public static function create_event( array $employee, string $calendar_id, array $event, bool $send_updates ) {
 		$created = self::request(
 			$employee,
@@ -356,7 +439,10 @@ class Google {
 		}
 
 		// Meet links are normally ready immediately, but can be pending briefly.
-		for ( $i = 0; $i < 3 && ! self::meet_link( $created ) && ! empty( $created['id'] ); $i++ ) {
+		for ( $i = 0; $i < 3; $i++ ) {
+			if ( '' !== self::meet_link( $created ) || empty( $created['id'] ) ) {
+				break;
+			}
 			sleep( 1 );
 			$fetched = self::request( $employee, 'GET', self::cal_path( $calendar_id ) . '/events/' . rawurlencode( $created['id'] ) );
 			if ( ! is_wp_error( $fetched ) ) {
@@ -366,7 +452,16 @@ class Google {
 		return $created;
 	}
 
-	/** @return array|\WP_Error Updated event. */
+	/**
+	 * Changes an event.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $calendar_id  Calendar ID.
+	 * @param string $event_id     Event ID.
+	 * @param array  $changes      Fields to change.
+	 * @param bool   $send_updates Whether Google emails the attendees.
+	 * @return array|\WP_Error Updated event.
+	 */
 	public static function patch_event( array $employee, string $calendar_id, string $event_id, array $changes, bool $send_updates ) {
 		return self::request(
 			$employee,
@@ -380,6 +475,12 @@ class Google {
 		);
 	}
 
+	/**
+	 * The Google Meet link of an event.
+	 *
+	 * @param array $event Event resource.
+	 * @return string URL or ''.
+	 */
 	public static function meet_link( array $event ): string {
 		if ( ! empty( $event['hangoutLink'] ) ) {
 			return $event['hangoutLink'];
@@ -392,7 +493,15 @@ class Google {
 		return '';
 	}
 
-	/** @return true|\WP_Error */
+	/**
+	 * Deletes an event; an event that is already gone counts as deleted.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $calendar_id  Calendar ID.
+	 * @param string $event_id     Event ID.
+	 * @param bool   $send_updates Whether Google emails the attendees.
+	 * @return true|\WP_Error
+	 */
 	public static function delete_event( array $employee, string $calendar_id, string $event_id, bool $send_updates ) {
 		$result = self::request(
 			$employee,
@@ -407,7 +516,15 @@ class Google {
 		return true;
 	}
 
-	/** @return array|\WP_Error Events of a (public) calendar in a time range. */
+	/**
+	 * Events of a (public) calendar in a time range, e.g. a holiday calendar.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $calendar_id Calendar ID.
+	 * @param int    $from        Range start (Unix timestamp).
+	 * @param int    $to          Range end (Unix timestamp).
+	 * @return array|\WP_Error Events.
+	 */
 	public static function list_events( array $employee, string $calendar_id, int $from, int $to ) {
 		$data = self::request(
 			$employee,
@@ -423,13 +540,31 @@ class Google {
 		return is_wp_error( $data ) ? $data : ( $data['items'] ?? array() );
 	}
 
+	/**
+	 * Asks Google to revoke the employee's refresh token.
+	 *
+	 * @param array $employee Employee.
+	 */
 	public static function revoke( array $employee ) {
 		$refresh = Crypto::decrypt( $employee['refresh_token'] );
 		if ( $refresh ) {
-			wp_remote_post( self::REVOKE_URL, array( 'timeout' => 10, 'body' => array( 'token' => $refresh ) ) );
+			wp_remote_post(
+				self::REVOKE_URL,
+				array(
+					'timeout' => 10,
+					'body'    => array( 'token' => $refresh ),
+				)
+			);
 		}
 	}
 
+	/**
+	 * Ends the request with a simple message page.
+	 *
+	 * @param string $title   Heading.
+	 * @param string $message Text.
+	 * @param int    $status  HTTP status.
+	 */
 	private static function message_page( string $title, string $message, int $status ) {
 		wp_die( '<h1>' . esc_html( $title ) . '</h1><p>' . esc_html( $message ) . '</p>', esc_html( $title ), array( 'response' => (int) $status ) );
 	}

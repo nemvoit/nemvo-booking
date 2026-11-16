@@ -1,7 +1,17 @@
 <?php
+/**
+ * Privacy (GDPR) features.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
+
+// Bookings, employees and the log live in the plugin's own tables, which have no WordPress API.
+// Queries are prepared; results that are read repeatedly in a request are cached in the class.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * GDPR: consent, automatic deletion of old personal data, and WordPress's
@@ -9,6 +19,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class Privacy {
 
+	/**
+	 * Hooks into the privacy tools, the privacy policy guide and the daily job.
+	 */
 	public static function init() {
 		add_filter( 'wp_privacy_personal_data_exporters', array( __CLASS__, 'register_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( __CLASS__, 'register_eraser' ) );
@@ -16,7 +29,11 @@ class Privacy {
 		add_action( 'nemvo_booking_daily', array( __CLASS__, 'apply_retention' ) );
 	}
 
-	/** Consent checkbox label as HTML, or '' when consent isn't required. */
+	/**
+	 * Consent checkbox label as HTML, or '' when consent isn't required.
+	 *
+	 * @return string
+	 */
 	public static function consent_label(): string {
 		if ( ! Settings::get( 'privacy_consent' ) ) {
 			return '';
@@ -32,12 +49,15 @@ class Privacy {
 		);
 	}
 
+	/**
+	 * Suggested text for the site's privacy policy (Settings → Privacy → Policy guide).
+	 */
 	public static function policy_content() {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$days = (int) Settings::get( 'retention_days' );
-		$text = '<p>' . esc_html__( 'When you book a meeting, we store the details you enter in the booking form (such as name, email, company, phone and message), the email addresses of any guests you add, the chosen time, your time zone and your IP address. We use them to arrange the meeting, send confirmations and invitations, and protect the booking form against abuse.', 'nemvo-booking' ) . '</p>';
+		$days  = (int) Settings::get( 'retention_days' );
+		$text  = '<p>' . esc_html__( 'When you book a meeting, we store the details you enter in the booking form (such as name, email, company, phone and message), the email addresses of any guests you add, the chosen time, your time zone and your IP address. We use them to arrange the meeting, send confirmations and invitations, and protect the booking form against abuse.', 'nemvo-booking' ) . '</p>';
 		$text .= '<p>' . esc_html__( 'The meeting is created in our Google Calendar with a Google Meet link, so your name, email address and answers are also processed by Google as our service provider.', 'nemvo-booking' ) . '</p>';
 		if ( Protection::cap_enabled() ) {
 			$text .= '<p>' . esc_html__( 'To keep out spam bots, your browser solves a small puzzle with our own verification server (Cap) before the booking is sent. No cookies are used for this.', 'nemvo-booking' ) . '</p>';
@@ -52,7 +72,9 @@ class Privacy {
 		wp_add_privacy_policy_content( __( 'Nemvo Booking', 'nemvo-booking' ), wp_kses_post( $text ) );
 	}
 
-	/** Anonymizes bookings whose meeting ended more than the configured number of days ago. */
+	/**
+	 * Anonymizes bookings whose meeting ended more than the configured number of days ago (daily job).
+	 */
 	public static function apply_retention() {
 		global $wpdb;
 		$days = (int) Settings::get( 'retention_days' );
@@ -65,12 +87,16 @@ class Privacy {
 			Bookings::anonymize( Bookings::get( (int) $id ) );
 		}
 		if ( $ids ) {
-			/* translators: 1: number of bookings, 2: days */
 			Log::info( 'privacy.retention', sprintf( 'Deleted personal data from %1$d booking(s) older than %2$d days.', count( $ids ), $days ) );
 		}
 	}
 
-	/** @return array[] Bookings where the email is the booker or a guest. */
+	/**
+	 * Bookings where the email address is the booker or a guest.
+	 *
+	 * @param string $email Email address, lowercase.
+	 * @return array[] Bookings.
+	 */
 	private static function find( string $email ): array {
 		global $wpdb;
 		$table = Plugin::table( 'bookings' );
@@ -85,6 +111,12 @@ class Privacy {
 		return array_filter( array_map( array( Bookings::class, 'get' ), array_map( 'intval', $ids ) ) );
 	}
 
+	/**
+	 * Adds bookings to Tools → Export Personal Data.
+	 *
+	 * @param array $exporters Registered exporters.
+	 * @return array
+	 */
 	public static function register_exporter( $exporters ) {
 		$exporters['nemvo-booking'] = array(
 			'exporter_friendly_name' => __( 'Bookings', 'nemvo-booking' ),
@@ -93,6 +125,12 @@ class Privacy {
 		return $exporters;
 	}
 
+	/**
+	 * Adds bookings to Tools → Erase Personal Data.
+	 *
+	 * @param array $erasers Registered erasers.
+	 * @return array
+	 */
 	public static function register_eraser( $erasers ) {
 		$erasers['nemvo-booking'] = array(
 			'eraser_friendly_name' => __( 'Bookings', 'nemvo-booking' ),
@@ -101,26 +139,63 @@ class Privacy {
 		return $erasers;
 	}
 
-	public static function export( $email, $page = 1 ) {
+	/**
+	 * Exports the bookings of an email address. Everything fits on one page, so WordPress's page
+	 * number (second argument) isn't needed.
+	 *
+	 * @param string $email Email address.
+	 * @return array Export data in the format WordPress expects.
+	 */
+	public static function export( $email ) {
 		$items = array();
 		foreach ( self::find( strtolower( $email ) ) as $booking ) {
 			$cfg  = Pages::config( $booking['page_id'] );
 			$data = array(
-				array( 'name' => __( 'Booking page', 'nemvo-booking' ), 'value' => $cfg['title'] ),
-				array( 'name' => __( 'Time', 'nemvo-booking' ), 'value' => wp_date( 'Y-m-d H:i', $booking['start'] ) . ' ' . wp_timezone_string() ),
-				array( 'name' => __( 'Status', 'nemvo-booking' ), 'value' => $booking['status'] ),
-				array( 'name' => __( 'Hosts', 'nemvo-booking' ), 'value' => implode( ', ', wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ) ) ),
+				array(
+					'name'  => __( 'Booking page', 'nemvo-booking' ),
+					'value' => $cfg['title'],
+				),
+				array(
+					'name'  => __( 'Time', 'nemvo-booking' ),
+					'value' => wp_date( 'Y-m-d H:i', $booking['start'] ) . ' ' . wp_timezone_string(),
+				),
+				array(
+					'name'  => __( 'Status', 'nemvo-booking' ),
+					'value' => $booking['status'],
+				),
+				array(
+					'name'  => __( 'Hosts', 'nemvo-booking' ),
+					'value' => implode( ', ', wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ) ),
+				),
 			);
 			if ( strtolower( $booking['email'] ) === strtolower( $email ) ) {
 				foreach ( Bookings::answer_rows( $booking, $cfg ) as $row ) {
-					$data[] = array( 'name' => $row[0], 'value' => $row[1] );
+					$data[] = array(
+						'name'  => $row[0],
+						'value' => $row[1],
+					);
 				}
-				$data[] = array( 'name' => __( 'Guests', 'nemvo-booking' ), 'value' => implode( ', ', $booking['guests'] ) );
-				$data[] = array( 'name' => __( 'Time zone', 'nemvo-booking' ), 'value' => $booking['timezone'] );
-				$data[] = array( 'name' => __( 'IP address', 'nemvo-booking' ), 'value' => $booking['ip'] );
-				$data[] = array( 'name' => __( 'Consent given', 'nemvo-booking' ), 'value' => $booking['consent_at'] ? $booking['consent_at'] . ' UTC' : '–' );
+				$data[] = array(
+					'name'  => __( 'Guests', 'nemvo-booking' ),
+					'value' => implode( ', ', $booking['guests'] ),
+				);
+				$data[] = array(
+					'name'  => __( 'Time zone', 'nemvo-booking' ),
+					'value' => $booking['timezone'],
+				);
+				$data[] = array(
+					'name'  => __( 'IP address', 'nemvo-booking' ),
+					'value' => $booking['ip'],
+				);
+				$data[] = array(
+					'name'  => __( 'Consent given', 'nemvo-booking' ),
+					'value' => $booking['consent_at'] ? $booking['consent_at'] . ' UTC' : '–',
+				);
 			} else {
-				$data[] = array( 'name' => __( 'Invited as guest by', 'nemvo-booking' ), 'value' => $booking['name'] );
+				$data[] = array(
+					'name'  => __( 'Invited as guest by', 'nemvo-booking' ),
+					'value' => $booking['name'],
+				);
 			}
 			$items[] = array(
 				'group_id'    => 'nemvo-booking',
@@ -135,7 +210,14 @@ class Privacy {
 		);
 	}
 
-	public static function erase( $email, $page = 1 ) {
+	/**
+	 * Anonymizes the bookings of an email address (as booker), removes it from guest lists and
+	 * deletes log entries that mention it. Everything is done in one go, so the page number isn't needed.
+	 *
+	 * @param string $email Email address.
+	 * @return array Result in the format WordPress expects.
+	 */
+	public static function erase( $email ) {
 		global $wpdb;
 		$email   = strtolower( $email );
 		$removed = 0;

@@ -1,32 +1,56 @@
 <?php
+/**
+ * Installation and database upgrades.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Creates the plugin's tables and moves stored data forward when the plugin is updated.
+ */
 class Install {
 
-	const DB_VERSION = '3';
+	/**
+	 * Database version. 4 renamed the booking page post type from nb_booking_page to
+	 * nemvo_booking_page and encrypted the stored secrets.
+	 */
+	const DB_VERSION = 4;
 
+	/**
+	 * Activation: creates or upgrades the tables and schedules the daily job.
+	 */
 	public static function activate() {
-		self::create_tables();
+		self::maybe_upgrade();
 		if ( ! wp_next_scheduled( 'nemvo_booking_daily' ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'nemvo_booking_daily' );
 		}
 	}
 
+	/**
+	 * Deactivation: stops the daily job. Data stays until the plugin is deleted.
+	 */
 	public static function deactivate() {
 		wp_clear_scheduled_hook( 'nemvo_booking_daily' );
 	}
 
+	/**
+	 * Runs on every request (plugins_loaded) and does nothing once the stored database version
+	 * matches. Updates that skip versions run every step they missed.
+	 */
 	public static function maybe_upgrade() {
 		$installed = get_option( 'nemvo_booking_db_version' );
-		if ( $installed === self::DB_VERSION ) {
+		if ( false !== $installed && self::DB_VERSION === (int) $installed ) {
 			return;
 		}
 		self::create_tables();
+		$installed = (int) $installed;
 
 		// Database version 1 had no rescheduling: give saved confirmation emails the new link.
-		if ( '1' === $installed ) {
+		if ( 1 === $installed ) {
 			$saved = get_option( Settings::OPTION );
 			$body  = $saved['email_booker_confirm_body'] ?? '';
 			if ( $body && false === strpos( $body, '{reschedule_link}' ) && false !== strpos( $body, 'Need to cancel? {cancel_link}' ) ) {
@@ -34,8 +58,88 @@ class Install {
 				update_option( Settings::OPTION, $saved );
 			}
 		}
+
+		if ( $installed > 0 && $installed < 4 ) {
+			self::rename_post_type();
+			self::secure_settings();
+		}
+
+		update_option( 'nemvo_booking_db_version', self::DB_VERSION );
 	}
 
+	/**
+	 * Version 4: booking pages move from the post type nb_booking_page to nemvo_booking_page.
+	 * Post IDs stay the same, so blocks and shortcodes on existing pages keep working. Screen
+	 * options saved per user (closed boxes, box order, hidden columns) are carried over too.
+	 */
+	private static function rename_post_type() {
+		global $wpdb;
+		$old = Pages::LEGACY_CPT;
+		$new = Pages::CPT;
+
+		// One-time migration of the plugin's own posts; WordPress has no API to change a post type in bulk.
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s", $old ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $ids ) {
+			$wpdb->update( $wpdb->posts, array( 'post_type' => $new ), array( 'post_type' => $old ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			foreach ( $ids as $id ) {
+				clean_post_cache( (int) $id );
+			}
+		}
+
+		// Meta box IDs and list columns were renamed in the same version.
+		$renames = array(
+			'nb-hosts'        => 'nemvo-booking-hosts',
+			'nb-scheduling'   => 'nemvo-booking-scheduling',
+			'nb-availability' => 'nemvo-booking-availability',
+			'nb-form'         => 'nemvo-booking-form',
+			'nb-after'        => 'nemvo-booking-after',
+			'nb-embed'        => 'nemvo-booking-embed',
+			'nb_hosts'        => 'nemvo_booking_hosts',
+			'nb_duration'     => 'nemvo_booking_duration',
+			'nb_upcoming'     => 'nemvo_booking_upcoming',
+			'nb_shown_on'     => 'nemvo_booking_shown_on',
+			'nb_code'         => 'nemvo_booking_code',
+		);
+		$keys    = array(
+			"closedpostboxes_{$old}"         => "closedpostboxes_{$new}",
+			"metaboxhidden_{$old}"           => "metaboxhidden_{$new}",
+			"meta-box-order_{$old}"          => "meta-box-order_{$new}",
+			"screen_layout_{$old}"           => "screen_layout_{$new}",
+			"manageedit-{$old}columnshidden" => "manageedit-{$new}columnshidden",
+			"edit_{$old}_per_page"           => "edit_{$new}_per_page",
+		);
+		foreach ( $keys as $old_key => $new_key ) {
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s", $old_key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			foreach ( $rows as $row ) {
+				$value = maybe_unserialize( $row->meta_value );
+				if ( is_array( $value ) ) {
+					foreach ( $value as $index => $item ) {
+						$value[ $index ] = is_string( $item ) ? strtr( $item, $renames ) : $item;
+					}
+				}
+				update_user_meta( (int) $row->user_id, $new_key, $value );
+				delete_user_meta( (int) $row->user_id, $old_key );
+			}
+		}
+	}
+
+	/**
+	 * Version 4: the Google client secret and the Cap secret key are stored encrypted (see
+	 * Settings::encrypt_secrets()), and the removed "Widget script URL" setting is dropped.
+	 * Saving the option once encrypts values that were stored in plain text.
+	 */
+	private static function secure_settings() {
+		$saved = get_option( Settings::OPTION );
+		if ( ! is_array( $saved ) ) {
+			return;
+		}
+		unset( $saved['cap_script_url'] );
+		update_option( Settings::OPTION, Settings::encrypt_secrets( $saved ) );
+	}
+
+	/**
+	 * Creates or updates the plugin's tables with dbDelta().
+	 */
 	public static function create_tables() {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -118,7 +222,5 @@ class Install {
 			KEY booking_id (booking_id)
 			) {$charset};"
 		);
-
-		update_option( 'nemvo_booking_db_version', self::DB_VERSION );
 	}
 }

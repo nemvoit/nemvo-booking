@@ -814,12 +814,13 @@
 			html += '<p class="nb-error" role="alert" hidden></p>';
 			html += '<button type="button" class="nb-button nb-button--danger" data-cancel>' + esc(t.cancelButton) + '</button>';
 			if (b.canReschedule) {
-				var moveUrl = window.location.href.replace('nb_cancel=', 'nb_reschedule=');
+				// Links sent before 1.2.2 use nb_cancel; keep the name the link came with.
+				var moveUrl = window.location.href.replace(/([?&])(nemvo_booking|nb)_cancel=/, '$1$2_reschedule=');
 				html += ' <a class="nb-link nb-instead" href="' + esc(moveUrl) + '">' + esc(t.rescheduleInstead) + ' →</a>';
 			}
 		}
 		if ((done || b.status === 'cancelled') && this.cfg.pageId) {
-			var url = window.location.href.replace(/([?&])nb_cancel=[^&#]*&?/, '$1').replace(/[?&]$/, '');
+			var url = window.location.href.replace(/([?&])(?:nemvo_booking|nb)_cancel=[^&#]*&?/, '$1').replace(/[?&]$/, '');
 			html += '<p><a class="nb-link" href="' + esc(url) + '">' + esc(t.bookNew) + ' →</a></p>';
 		}
 		this.root.innerHTML = html + '</div></div>';

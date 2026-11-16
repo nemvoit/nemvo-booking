@@ -1,4 +1,10 @@
 <?php
+/**
+ * Booking emails.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
@@ -9,25 +15,57 @@ defined( 'ABSPATH' ) || exit;
  */
 class Mailer {
 
-	/** @var string Invitation attached to the email currently being sent. */
+	/**
+	 * Invitation attached to the email currently being sent.
+	 *
+	 * @var string
+	 */
 	private static $ics = '';
 
+	/**
+	 * Emails for a new booking.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 */
 	public static function booking_created( array $booking, array $cfg ) {
 		self::notify( $booking, $cfg, 'REQUEST', 'booker_confirm', 'guest_invite', 'employee_notify' );
 	}
 
+	/**
+	 * Emails for a moved booking.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 */
 	public static function booking_rescheduled( array $booking, array $cfg ) {
 		self::notify( $booking, $cfg, 'REQUEST', 'booker_reschedule', 'guest_reschedule', 'employee_reschedule' );
 	}
 
+	/**
+	 * Emails for a cancelled booking.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 */
 	public static function booking_cancelled( array $booking, array $cfg ) {
 		self::notify( $booking, $cfg, 'CANCEL', 'booker_cancel', 'guest_cancel', 'employee_cancel' );
 	}
 
+	/**
+	 * Sends the emails for a change to everyone who should get one.
+	 *
+	 * @param array  $booking     Booking.
+	 * @param array  $cfg         Booking page configuration.
+	 * @param string $method      iCalendar method: REQUEST or CANCEL.
+	 * @param string $booker_type Email type for the booker.
+	 * @param string $guest_type  Email type for guests.
+	 * @param string $host_type   Email type for hosts.
+	 */
 	private static function notify( array $booking, array $cfg, string $method, string $booker_type, string $guest_type, string $host_type ) {
-		$wp_invites = 'wordpress' === Settings::get( 'invite_mode' );
+		$wp_invites = 'wordpress' === Settings::get( 'invite_mode' ); // phpcs:ignore WordPress.WP.CapitalPDangit.MisspelledInText -- a setting value, not the name.
 		$hosts      = Employees::many( $booking['employee_ids'] );
-		$organizer  = Employees::get( $booking['organizer_id'] ) ?: ( $hosts[0] ?? null );
+		$organizer  = Plugin::fallback( Employees::get( $booking['organizer_id'] ), ( $hosts[0] ?? null ) );
 		$org_email  = $organizer ? $organizer['email'] : '';
 
 		/*
@@ -54,6 +92,18 @@ class Mailer {
 		}
 	}
 
+	/**
+	 * Sends one email type to one person, if that email is switched on.
+	 *
+	 * @param string $type           Email type, e.g. booker_confirm.
+	 * @param string $to             Recipient.
+	 * @param array  $booking        Booking.
+	 * @param array  $cfg            Booking page configuration.
+	 * @param string $timezone       Time zone for dates in the text.
+	 * @param string $recipient_name Name for {recipient_name}.
+	 * @param string $reply_to       Reply-To address.
+	 * @param string $ics            Invitation to attach, or ''.
+	 */
 	private static function send( string $type, string $to, array $booking, array $cfg, string $timezone, string $recipient_name, string $reply_to, string $ics ) {
 		if ( ! Settings::get( "email_{$type}_enabled" ) || ! is_email( $to ) ) {
 			return;
@@ -68,6 +118,14 @@ class Mailer {
 	/**
 	 * Sends an HTML email through wp_mail(), so whatever WordPress is configured to send with
 	 * (e.g. WP Mail SMTP) is used. Optionally attaches an iCalendar invitation.
+	 *
+	 * @param string $to         Recipient.
+	 * @param string $subject    Subject.
+	 * @param string $html       Body; wrapped in the email layout unless it is a whole HTML document.
+	 * @param string $reply_to   Reply-To address.
+	 * @param string $ics        Invitation to attach, or ''.
+	 * @param int    $booking_id Booking for the log entry.
+	 * @return bool Whether wp_mail() accepted it.
 	 */
 	public static function deliver( string $to, string $subject, string $html, string $reply_to = '', string $ics = '', int $booking_id = 0 ): bool {
 		$body    = false === strpos( $html, '<html' ) ? self::layout( $html ) : $html;
@@ -117,7 +175,11 @@ class Mailer {
 		return $sent;
 	}
 
-	/** @param \PHPMailer\PHPMailer\PHPMailer $phpmailer */
+	/**
+	 * Adds the invitation to the message being sent (phpmailer_init).
+	 *
+	 * @param \PHPMailer\PHPMailer\PHPMailer $phpmailer Mailer.
+	 */
 	public static function attach_ics( $phpmailer ) {
 		// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 		$phpmailer->AltBody = wp_strip_all_tags( str_replace( array( '<br />', '<br>', '</p>' ), "\n", $phpmailer->Body ) );
@@ -126,8 +188,14 @@ class Mailer {
 		$phpmailer->addStringAttachment( self::$ics, 'invite.ics', 'base64', 'application/ics' );
 	}
 
+	/**
+	 * Wraps email content in a simple layout with the accent color.
+	 *
+	 * @param string $content HTML.
+	 * @return string HTML document.
+	 */
 	private static function layout( string $content ): string {
-		$accent = sanitize_hex_color( (string) Settings::get( 'accent_color' ) ) ?: '#4f46e5';
+		$accent = Plugin::fallback( sanitize_hex_color( (string) Settings::get( 'accent_color' ) ), '#4f46e5' );
 		return '<!doctype html><html><body style="margin:0;padding:24px;background:#f5f5f7;">'
 			. '<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:28px 32px;border-top:4px solid ' . esc_attr( $accent ) . ';'
 			. 'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#1f2937;">'
@@ -135,12 +203,20 @@ class Mailer {
 			. '</div></body></html>';
 	}
 
+	/**
+	 * The iCalendar invitation (or cancellation) for a booking.
+	 *
+	 * @param array  $booking Booking.
+	 * @param array  $cfg     Booking page configuration.
+	 * @param string $method  REQUEST or CANCEL.
+	 * @return string
+	 */
 	public static function ics( array $booking, array $cfg, string $method ): string {
 		$organizer = Employees::get( $booking['organizer_id'] );
 		$hosts     = Employees::many( $booking['employee_ids'] );
 		$vars      = Bookings::vars( $booking, $cfg, $cfg['timezone'] );
 		$cancel    = 'CANCEL' === $method;
-		$uid       = $booking['ical_uid'] ?: 'nemvo-booking-' . $booking['id'] . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
+		$uid       = $booking['ical_uid'] ? $booking['ical_uid'] : 'nemvo-booking-' . $booking['id'] . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
 
 		$lines = array(
 			'BEGIN:VCALENDAR',
@@ -185,23 +261,42 @@ class Mailer {
 		return implode( "\r\n", array_map( array( __CLASS__, 'fold' ), $lines ) ) . "\r\n";
 	}
 
+	/**
+	 * Escapes a value for an iCalendar text property.
+	 *
+	 * @param string $value Text.
+	 * @return string
+	 */
 	private static function text( string $value ): string {
 		return str_replace( array( '\\', ';', ',', "\r\n", "\n" ), array( '\\\\', '\;', '\,', '\n', '\n' ), $value );
 	}
 
+	/**
+	 * Quotes a value for an iCalendar parameter.
+	 *
+	 * @param string $value Text.
+	 * @return string
+	 */
 	private static function param( string $value ): string {
 		return '"' . str_replace( array( '"', "\r", "\n" ), '', $value ) . '"';
 	}
 
-	/** Folds lines longer than 75 octets (RFC 5545), without splitting UTF-8 characters. */
+	/**
+	 * Folds lines longer than 75 octets (RFC 5545), without splitting UTF-8 characters.
+	 *
+	 * @param string $line Content line.
+	 * @return string
+	 */
 	private static function fold( string $line ): string {
-		$out   = '';
-		$limit = 75;
-		while ( strlen( $line ) > $limit ) {
-			$chunk = mb_strcut( $line, 0, $limit, 'UTF-8' );
-			$out  .= $chunk . "\r\n ";
-			$line  = substr( $line, strlen( $chunk ) );
-			$limit = 74; // Continuation lines start with a space.
+		$out    = '';
+		$limit  = 75;
+		$length = strlen( $line );
+		while ( $length > $limit ) {
+			$chunk  = mb_strcut( $line, 0, $limit, 'UTF-8' );
+			$out   .= $chunk . "\r\n ";
+			$line   = substr( $line, strlen( $chunk ) );
+			$length = strlen( $line );
+			$limit  = 74; // Continuation lines start with a space.
 		}
 		return $out . $line;
 	}

@@ -197,15 +197,19 @@ The page's own defaults (grey background, system font) are `:where(body){…}` a
 | `nemvo_booking_cancelled` | action | `$booking` | After a booking is cancelled |
 | `nemvo_booking_standalone_head` | action | | Inside `<head>` of the standalone cancel and reschedule page |
 | `nemvo_booking_client_ip` | filter | `$ip` | The visitor's IP address, stored with the booking and used for the rate limit, the blocklist and the log. Filter it to read the real address behind a proxy. |
+| `nemvo_booking_capability` | filter | `$capability` | The capability needed for the Bookings menu, booking pages, employees and settings. Default `manage_options`. |
 | `nemvo_booking_google_auth_url` | filter | `$url`, `$params` | The Google sign-in address a host is sent to when connecting their calendar |
+
+Booker links have the form `https://<page>/?nemvo_booking_cancel=<token>` and `?nemvo_booking_reschedule=<token>`. The names used before 1.2.2, `nb_cancel` and `nb_reschedule`, are still accepted, so links in emails that were already sent keep working. Booking pages are the post type `nemvo_booking_page` (`nb_booking_page` before 1.2.2; existing pages are moved on update and keep their IDs).
 
 ## Privacy and external services
 
 The plugin sends no data to its author. It connects to:
 
 - **Google** (OAuth and the Calendar API), with your own OAuth client: to read when hosts are busy and which days are public holidays, and to create, move and cancel meetings with the booker's details.
-- **Gravatar**, only for hosts without a chosen photo, on booking pages that show host photos, when avatars are switched on under Settings → Discussion. The visitor's browser loads the image from Gravatar.
-- **Your own Cap server**, if you switch Cap on. By default visitors' browsers reach it through WordPress, so it can stay on an internal network.
+- **Gravatar**, only for hosts without a chosen photo and only when avatars are switched on under Settings → Discussion: on booking pages that show host photos (the visitor's browser loads the image) and in wp-admin's host lists (the admin's browser loads it). With avatars off, wp-admin shows a bundled placeholder.
+- **Your own Cap server**, if you switch Cap on. By default visitors' browsers reach it through WordPress, so it can stay on an internal network. Cap's instrumentation challenge runs a script sent by your Cap server in a sandboxed frame.
+- **trycap.dev**, only when a visitor clicks the "Cap" credit or "Troubleshoot" link in the visible Cap widget.
 
 The details, with links to the services' terms, are in [readme.txt](nemvo-booking/readme.txt) under *External services*.
 
@@ -225,6 +229,8 @@ docker compose -f .devcontainer/docker-compose.yml exec wordpress bash /workspac
 | Mailpit   | http://localhost:8025        | catches all email      |
 | Cap       | http://localhost:3000        | admin key in compose file |
 
+The ports can be changed with `WP_PORT`, `MAILPIT_PORT` and `CAP_PORT`, e.g. `WP_PORT=8180 docker compose -f .devcontainer/docker-compose.yml up -d`. Run `setup.sh` with the same `WP_PORT` so WordPress gets the right address.
+
 By default, a dev-only mu-plugin (`.devcontainer/mu-plugins/dev-google-mock.php`) fakes the Google API, so everything works without credentials:
 
 - Everyone is busy 12:00–13:00. Anna is also busy 09:00–10:00 and Erik 15:00–16:00.
@@ -239,14 +245,16 @@ The plugin has no build step: the PHP, JavaScript and CSS in `nemvo-booking/` ar
 
 ```sh
 ./build.sh                                        # creates dist/nemvo-booking-<version>.zip
-./smoke-test.sh dist/nemvo-booking-<version>.zip  # installs it on a clean WordPress, checks every page loads, runs Plugin Check
+./smoke-test.sh dist/nemvo-booking-<version>.zip  # installs it on a clean WordPress (port 8087, SMOKE_PORT to change), checks every page loads, runs Plugin Check
 ```
 
-GitHub Actions runs the PHP lint (PHP 7.4 to 8.4) and [Plugin Check](https://wordpress.org/plugins/plugin-check/) on every push and pull request.
+Coding standards: `phpcs.xml.dist` holds the [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) ruleset with PHPCompatibilityWP. Run `phpcs` (WPCS 3) from the repository root; it must report nothing.
+
+GitHub Actions runs the PHP lint (PHP 7.4 to 8.4), the coding standards and [Plugin Check](https://wordpress.org/plugins/plugin-check/) on every push and pull request.
 
 ## Releasing
 
-1. Set the new version in `nemvo-booking/nemvo-booking.php` (the `Version:` header and `NEMVO_BOOKING_VERSION`) and in `nemvo-booking/readme.txt` (`Stable tag:`), and add a changelog entry to both `readme.txt` and this README. `build.sh` refuses to build when the three versions differ.
+1. Every change gets a new version. Set it in `nemvo-booking/nemvo-booking.php` (the `Version:` header and `NEMVO_BOOKING_VERSION`) and in `nemvo-booking/readme.txt` (`Stable tag:`), add a changelog entry to both `readme.txt` and this README, and an Upgrade Notice to `readme.txt`. If strings changed, regenerate `nemvo-booking/languages/nemvo-booking.pot` (`wp i18n make-pot nemvo-booking nemvo-booking/languages/nemvo-booking.pot`). `build.sh` refuses to build when the three versions differ.
 2. Run `./build.sh` and `./smoke-test.sh dist/nemvo-booking-<version>.zip`.
 3. Commit, then tag and push:
 
@@ -263,7 +271,8 @@ The [release workflow](.github/workflows/release.yml) builds the zip, creates th
 nemvo-booking/
   nemvo-booking.php          bootstrap
   readme.txt                 WordPress.org readme
-  uninstall.php              removes all data, if enabled in Settings
+  uninstall.php              removes all data, if enabled in Settings (every site on multisite)
+  languages/                 translation template (nemvo-booking.pot)
   includes/
     class-google.php         OAuth + Calendar API (no SDK)
     class-availability.php   slot calculation
@@ -282,6 +291,19 @@ nemvo-booking/
 
 ## Changelog
 
+### 1.2.2
+
+- Booking pages are now the post type `nemvo_booking_page` (was `nb_booking_page`). Existing pages are moved automatically on update (database version 4) and keep their IDs, so blocks and shortcodes keep working.
+- Booker links now use `nemvo_booking_cancel` and `nemvo_booking_reschedule`; the old `nb_cancel` and `nb_reschedule` links keep working.
+- wp-admin form fields, notices, meta boxes and list columns use the `nemvo_booking` prefix (`nb-*` CSS classes and `--nb-*` tokens are unchanged).
+- The Google Client secret and the Cap secret key are stored encrypted and no longer printed into the settings form.
+- Removed the "Widget script URL" Cap setting; the bundled widget is always used. The widget no longer adds the page address to its credit link (`CAP_DISABLE_WIDGET_REF`), and the Cap relay is rate-limited.
+- New filter `nemvo_booking_capability`.
+- wp-admin shows a bundled placeholder instead of Gravatar when avatars are off.
+- REST API parameters are validated and sanitized per route; `nemvo_booking_client_ip` values must be IP addresses.
+- Uninstall (when enabled) revokes Google access and handles multisite.
+- Block editor translations, a `.pot` file, full license texts for the bundled Cap files (including HashWX, LGPL 3.0), WordPress Coding Standards clean.
+
 ### 1.2.1
 
 - Cap: the server address is now the one WordPress uses, and a public address is optional. Without one, visitors' browsers talk to Cap through WordPress (`POST /wp-json/nemvo-booking/v1/cap/challenge` and `…/cap/redeem`), so Cap can stay on an internal network. Existing settings are carried over unchanged.
@@ -293,4 +315,4 @@ nemvo-booking/
 
 ## License
 
-MIT, see [nemvo-booking/LICENSE](nemvo-booking/LICENSE). The bundled Cap widget (Apache License 2.0) and pako (MIT and Zlib) keep their own licenses, in [nemvo-booking/assets/vendor/cap/](nemvo-booking/assets/vendor/cap/).
+MIT, see [nemvo-booking/LICENSE](nemvo-booking/LICENSE). The bundled Cap widget and solver (Apache License 2.0), HashWX (GNU LGPL 3.0) and pako (MIT and Zlib) keep their own licenses, in [nemvo-booking/assets/vendor/cap/](nemvo-booking/assets/vendor/cap/).

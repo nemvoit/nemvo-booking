@@ -114,4 +114,4 @@ if ( ! empty( $login['session_token'] ) ) {
 	WP_CLI::warning( 'Could not log in to Cap; CAPTCHA not enabled.' );
 }
 
-WP_CLI::success( 'Demo data created: http://localhost:8080/book-anna/, /book-erik/ and /book/ (both)' );
+WP_CLI::success( 'Demo data created: ' . home_url( '/book-anna/' ) . ', /book-erik/ and /book/ (both)' );

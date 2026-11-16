@@ -1,0 +1,2547 @@
+# Copyright (C) 2026 Nemvo
+# This file is distributed under the MIT.
+msgid ""
+msgstr ""
+"Project-Id-Version: Nemvo Booking 1.2.2\n"
+"Report-Msgid-Bugs-To: https://github.com/fpoller/nemvo-booking/issues\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-16T12:41:17+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: nemvo-booking\n"
+
+#. Plugin Name of the plugin
+#: nemvo-booking.php
+#: includes/class-privacy.php:72
+msgid "Nemvo Booking"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: nemvo-booking.php
+msgid "https://github.com/fpoller/nemvo-booking"
+msgstr ""
+
+#. Description of the plugin
+#: nemvo-booking.php
+msgid "Meeting booking with Google Calendar availability, Google Meet links and calendar invitations."
+msgstr ""
+
+#. Author of the plugin
+#: nemvo-booking.php
+msgid "Nemvo"
+msgstr ""
+
+#. Author URI of the plugin
+#: nemvo-booking.php
+msgid "https://nemvo.eu"
+msgstr ""
+
+#: includes/admin/class-admin.php:58
+#: includes/admin/class-admin.php:59
+#: includes/admin/class-bookings-page.php:72
+#: includes/class-privacy.php:122
+#: includes/class-privacy.php:136
+#: includes/class-privacy.php:202
+msgid "Bookings"
+msgstr ""
+
+#: includes/admin/class-admin.php:66
+#: includes/admin/class-employees-page.php:87
+msgid "Employees"
+msgstr ""
+
+#: includes/admin/class-admin.php:67
+#: includes/admin/class-log-page.php:39
+msgid "History log"
+msgstr ""
+
+#: includes/admin/class-admin.php:68
+#: includes/admin/class-settings-page.php:210
+msgid "Booking settings"
+msgstr ""
+
+#: includes/admin/class-admin.php:68
+#: includes/admin/class-page-editor.php:250
+#: includes/admin/class-page-editor.php:463
+msgid "Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php:98
+msgid "Copied!"
+msgstr ""
+
+#: includes/admin/class-admin.php:99
+msgid "Are you sure?"
+msgstr ""
+
+#: includes/admin/class-admin.php:100
+msgid "Replace this email with the default text?"
+msgstr ""
+
+#: includes/admin/class-admin.php:101
+msgid "Choose a photo"
+msgstr ""
+
+#: includes/admin/class-admin.php:102
+msgid "Use this photo"
+msgstr ""
+
+#: includes/admin/class-admin.php:103
+msgid "Testing…"
+msgstr ""
+
+#: includes/admin/class-admin.php:104
+msgid "The test could not be run. Reload the page and try again."
+msgstr ""
+
+#: includes/admin/class-admin.php:122
+msgid "Google is not connected yet, so nothing can be booked."
+msgstr ""
+
+#: includes/admin/class-admin.php:124
+msgid "Follow the setup guide in Settings →"
+msgstr ""
+
+#: includes/admin/class-admin.php:129
+msgid "Saved."
+msgstr ""
+
+#: includes/admin/class-admin.php:130
+msgid "Employee added. Now connect their Google Calendar below."
+msgstr ""
+
+#: includes/admin/class-admin.php:131
+msgid "Deleted."
+msgstr ""
+
+#: includes/admin/class-admin.php:132
+msgid "Google Calendar connected."
+msgstr ""
+
+#: includes/admin/class-admin.php:133
+msgid "Google Calendar disconnected."
+msgstr ""
+
+#: includes/admin/class-admin.php:134
+msgid "Calendar list refreshed."
+msgstr ""
+
+#: includes/admin/class-admin.php:135
+msgid "A new connect link was created. Copy it and send it to the employee."
+msgstr ""
+
+#: includes/admin/class-admin.php:136
+msgid "The booking was cancelled and everyone has been notified."
+msgstr ""
+
+#. translators: %s: employee name
+#: includes/admin/class-admin.php:166
+#, php-format
+msgid "Bookings: the Google Calendar connection for %s is not working."
+msgstr ""
+
+#. translators: %s: booking page titles
+#: includes/admin/class-admin.php:170
+#, php-format
+msgid "These booking pages show no available times: %s."
+msgstr ""
+
+#: includes/admin/class-admin.php:173
+msgid "Reconnect →"
+msgstr ""
+
+#: includes/admin/class-admin.php:185
+#: includes/admin/class-settings-page.php:149
+#: includes/class-google.php:119
+msgid "You are not allowed to do this."
+msgstr ""
+
+#: includes/admin/class-admin.php:213
+msgid "Copy"
+msgstr ""
+
+#: includes/admin/class-admin.php:225
+msgid "Confirmed"
+msgstr ""
+
+#: includes/admin/class-admin.php:226
+#: includes/admin/class-bookings-page.php:190
+msgid "Cancelled"
+msgstr ""
+
+#: includes/admin/class-admin.php:227
+msgid "Failed"
+msgstr ""
+
+#: includes/admin/class-admin.php:228
+msgid "Pending"
+msgstr ""
+
+#: includes/admin/class-admin.php:229
+msgid "Info"
+msgstr ""
+
+#: includes/admin/class-admin.php:230
+msgid "Warning"
+msgstr ""
+
+#: includes/admin/class-admin.php:231
+#: includes/admin/class-employees-page.php:148
+msgid "Error"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:65
+msgid "Upcoming"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:66
+msgid "Past"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:67
+msgid "Cancelled & failed"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:68
+msgid "All"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:102
+msgid "All booking pages"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:107
+msgid "Name, email, company…"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:108
+#: includes/admin/class-log-page.php:50
+msgid "Filter"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:114
+#: includes/admin/class-bookings-page.php:176
+msgid "When"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:115
+msgid "Booked by"
+msgstr ""
+
+#. translators: %d: minutes
+#: includes/admin/class-bookings-page.php:116
+#: includes/admin/class-bookings-page.php:183
+#: includes/class-pages.php:47
+#: includes/class-privacy.php:155
+#: assets/js/block.js:11
+#: assets/js/block.js:31
+msgid "Booking page"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:117
+#: includes/admin/class-page-editor.php:117
+msgid "Host"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:118
+#: includes/admin/class-bookings-page.php:175
+#: includes/admin/class-settings-page.php:337
+#: includes/class-privacy.php:163
+msgid "Status"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:124
+msgid "No bookings found."
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:140
+msgid "Meet"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:142
+#: includes/admin/class-employees-page.php:184
+msgid "Details"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:169
+msgid "All bookings"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:173
+msgid "Meeting"
+msgstr ""
+
+#. translators: 1: time, 2: timezone
+#: includes/admin/class-bookings-page.php:179
+#, php-format
+msgid "Booker's time: %1$s (%2$s)"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:182
+#: includes/admin/class-page-editor.php:560
+msgid "Length"
+msgstr ""
+
+#. translators: %d: minutes
+#: includes/admin/class-bookings-page.php:182
+#: includes/admin/class-page-editor.php:157
+#: includes/admin/class-page-editor.php:167
+#: includes/admin/class-page-editor.php:177
+#: includes/admin/class-page-editor.php:590
+#: includes/class-frontend.php:292
+#, php-format
+msgid "%d min"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:184
+#: includes/admin/class-page-editor.php:78
+#: includes/admin/class-page-editor.php:559
+#: includes/class-privacy.php:167
+msgid "Hosts"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:185
+#: includes/class-frontend.php:295
+msgid "Google Meet"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:186
+#: includes/admin/class-page-editor.php:341
+#: includes/class-privacy.php:179
+msgid "Guests"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:187
+msgid "Privacy consent"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:188
+msgid "Booked"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:191
+msgid "by an administrator"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:191
+msgid "by the booker"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:199
+msgid "Answers"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:210
+msgid "Move to another time"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:211
+msgid "This is the booker's personal link for picking a new time. Open it to move the meeting yourself (for example after a phone call), or send it to the booker."
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:213
+msgid "Open"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:219
+msgid "Cancel this booking"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:224
+msgid "Reason (included in the cancellation email)"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:226
+msgid "Removes the event from the host's Google Calendar and notifies the booker, guests and hosts."
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:227
+msgid "Cancel booking"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:233
+msgid "History"
+msgstr ""
+
+#: includes/admin/class-bookings-page.php:247
+msgid "Booking not found."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:53
+msgid "Employee not found."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:88
+msgid "Employees are the people visitors can book meetings with. Each one connects their Google Calendar, so busy times are blocked automatically and new meetings (with a Google Meet link) land directly in their calendar. Employees don't need a WordPress account."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:91
+#: includes/admin/class-employees-page.php:97
+msgid "Add employee"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:95
+#: includes/admin/class-employees-page.php:187
+#: includes/class-pages.php:87
+#: includes/class-pages.php:351
+msgid "Name"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:96
+#: includes/admin/class-employees-page.php:191
+#: includes/admin/class-page-editor.php:269
+#: includes/class-pages.php:95
+#: includes/class-pages.php:343
+msgid "Email"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:99
+msgid "The name is shown to visitors on booking pages. The email receives booking notifications and is suggested when connecting Google."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:105
+msgid "Employee"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:106
+#: includes/admin/class-employees-page.php:214
+msgid "Google Calendar"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:107
+#: includes/admin/class-employees-page.php:207
+#: includes/class-pages.php:46
+#: includes/class-pages.php:51
+msgid "Booking pages"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:113
+msgid "No employees yet. Add the first one above."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:126
+#: includes/admin/class-page-editor.php:521
+msgid "Edit"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:126
+msgid "Connect & edit"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:127
+msgid "Delete"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:144
+msgid "Not connected"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:151
+msgid "Connected"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:176
+msgid "All employees"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:188
+msgid "Shown to visitors."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:192
+msgid "Receives booking notifications."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:195
+msgid "Photo"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:200
+msgid "Choose photo"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:201
+#: includes/admin/class-page-editor.php:401
+msgid "Remove"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:203
+msgid "Shown on booking pages with \"Show the hosts' photos\" switched on. A square photo works best. Without one, the Gravatar for the email address is used."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:208
+msgid "Not used on any booking page yet. Add the employee under \"Hosts\" when editing a booking page."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:217
+msgid "The Google connection has not been set up yet."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:218
+msgid "Follow the setup guide in Settings first."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:223
+msgid "Refresh calendar list"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:224
+msgid "Reconnect"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:225
+msgid "Disconnect"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:228
+msgid "Calendars"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:229
+msgid "Times are blocked when this employee has an event marked \"Busy\" in any of the checked calendars. Events marked \"Free\" – such as most all-day events – don't block bookings. New meetings are added to the calendar selected under \"Add meetings here\"."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:233
+msgid "Calendar"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:234
+msgid "Check for conflicts"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:235
+msgid "Add meetings here"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:246
+msgid "primary"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:258
+msgid "Not connected yet. There are two ways to connect:"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:261
+msgid "If you can sign in to the employee's Google account (or this is you):"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:262
+msgid "Connect Google Calendar"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:265
+msgid "Otherwise, create a personal link and send it to the employee. They sign in with Google, click Allow, and they are connected. The link works for 7 days."
+msgstr ""
+
+#. translators: %s: expiry date
+#: includes/admin/class-employees-page.php:271
+#, php-format
+msgid "Valid until %s."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:274
+msgid "Create a new link"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:276
+msgid "Create connect link"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:286
+msgid "Save employee"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:308
+msgid "Please enter a name and a valid email address."
+msgstr ""
+
+#: includes/admin/class-log-page.php:40
+msgid "Everything that happens: bookings and cancellations, emails sent, Google Calendar connections and errors, and blocked spam attempts."
+msgstr ""
+
+#: includes/admin/class-log-page.php:44
+msgid "All levels"
+msgstr ""
+
+#: includes/admin/class-log-page.php:49
+msgid "Search…"
+msgstr ""
+
+#: includes/admin/class-log-page.php:69
+#: includes/class-privacy.php:159
+msgid "Time"
+msgstr ""
+
+#: includes/admin/class-log-page.php:70
+msgid "Level"
+msgstr ""
+
+#: includes/admin/class-log-page.php:71
+msgid "Event"
+msgstr ""
+
+#: includes/admin/class-log-page.php:72
+msgid "Message"
+msgstr ""
+
+#: includes/admin/class-log-page.php:73
+msgid "By"
+msgstr ""
+
+#: includes/admin/class-log-page.php:78
+msgid "Nothing logged yet."
+msgstr ""
+
+#: includes/admin/class-log-page.php:92
+msgid "Visitor / system"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:44
+msgid "e.g. 30 minute intro call"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:54
+msgid "Booking page saved."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:67
+msgid "The title is shown to visitors above the calendar and used in emails and the calendar event."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:70
+msgid "This booking page cannot be booked yet: select at least one host, and make sure every selected host has connected their Google Calendar."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:79
+msgid "Meeting length and booking window"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:80
+msgid "Weekly opening hours"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:81
+msgid "Booking form"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:82
+msgid "After booking"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:83
+msgid "Insert on a page"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:107
+msgid "Who is in the meeting? Every selected host attends, and a time is only offered when all of them are free. For example: one page for you, one for a colleague, and one that books both of you."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:110
+msgid "No employees yet."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:111
+msgid "Add employees first →"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:118
+msgid "Organizer"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:131
+msgid "Google not connected"
+msgstr ""
+
+#. translators: %s: employee name
+#: includes/admin/class-page-editor.php:134
+#, php-format
+msgid "%s organizes"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:139
+msgid "The organizer's Google Calendar holds the meeting and the Google Meet link; the other hosts are invited to it. With a single host, that host is the organizer."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:154
+msgid "Meeting lengths"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:159
+msgid "Select one or more. With several, the visitor chooses the length."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:163
+msgid "Preselected length"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:173
+msgid "Start times every"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:180
+msgid "How often a meeting can start, e.g. every 30 min gives 09:00, 09:30, 10:00…"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:184
+msgid "Minimum notice"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:186
+msgid "hours"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:187
+msgid "How far in advance a meeting must be booked. 24 means nothing can be booked within the next 24 hours."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:191
+msgid "Book up to"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:193
+msgid "days into the future"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:197
+msgid "Buffer time"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:199
+msgid "min before"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:201
+msgid "min after"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:202
+msgid "Free time required around the meeting, so hosts aren't booked back-to-back with other events."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:217
+msgid "Monday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:218
+msgid "Tuesday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:219
+msgid "Wednesday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:220
+msgid "Thursday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:221
+msgid "Friday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:222
+msgid "Saturday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:223
+msgid "Sunday"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:226
+msgid "When meetings can take place. Hosts' busy events in Google Calendar are always excluded on top of this. Leave a day empty to close it. Use commas for breaks, e.g. \"09:00-12:00, 13:00-17:00\"."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:231
+msgid "Closed"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:235
+#: includes/class-frontend.php:294
+#: includes/class-privacy.php:183
+msgid "Time zone"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:238
+msgid "The opening hours above are in this time zone. Visitors see times converted to their own time zone."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:242
+#: includes/admin/class-settings-page.php:443
+msgid "Public holidays"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:244
+msgid "Closed on public holidays"
+msgstr ""
+
+#. translators: %s: link to settings
+#: includes/admin/class-page-editor.php:249
+#, php-format
+msgid "Which countries' holidays are used is set in %s. Closed dates from the settings always apply."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:268
+#: includes/admin/class-settings-page.php:433
+msgid "Text"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:270
+#: includes/class-pages.php:119
+msgid "Phone"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:271
+msgid "Website"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:272
+msgid "Long text"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:273
+msgid "Dropdown"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:274
+msgid "Checkbox"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:279
+msgid "Description"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:281
+msgid "A short call to get to know each other and see how we can help."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:282
+msgid "Shown next to the calendar. Basic HTML allowed."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:286
+msgid "Host photos"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:288
+msgid "Show the hosts' photos above the title"
+msgstr ""
+
+#. translators: %s: link to the Employees page
+#: includes/admin/class-page-editor.php:293
+#, php-format
+msgid "Each host's photo is set under %s. Hosts without a photo use their profile picture from Gravatar, if avatars are switched on under Settings → Discussion, or are left out."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:294
+#: includes/admin/class-settings-page.php:314
+#: includes/class-employees.php:349
+msgid "Bookings → Employees"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:302
+msgid "Questions"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:303
+msgid "The visitor fills these in after picking a time. Answers are shown in the calendar event, the emails and under Bookings. Name and email are always required. The key is used as a placeholder in emails, e.g. {company}."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:307
+msgid "Label"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:308
+msgid "Key"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:309
+msgid "Type"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:310
+msgid "Placeholder / dropdown options"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:311
+msgid "Required"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:321
+msgid "+ Add question"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:343
+msgid "Let visitors invite colleagues by email"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:345
+msgid "Max"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:346
+msgid "Guests are added to the meeting and receive the calendar invitation."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:365
+msgid "Question"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:371
+msgid "auto"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:387
+msgid "Placeholder text"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:388
+msgid "One option per line"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:398
+msgid "Move up"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:399
+msgid "Move down"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:418
+msgid "Thank you message"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:432
+msgid "Shown after booking, above a summary with date, time and the Google Meet link. Placeholders such as {name}, {email}, {date}, {time}, {host} and {meet_link} work here too."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:436
+msgid "Changes"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:438
+msgid "Let the booker pick a new time"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:439
+msgid "Adds a \"pick a new time\" link to the confirmation email ({reschedule_link}). The meeting keeps its Google Meet link and everyone receives the updated time. Cancelling is always possible until the meeting starts."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:443
+msgid "Redirect instead"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:446
+msgid "Optional. Send the visitor to this page after booking instead of showing the message (useful for conversion tracking)."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:450
+msgid "Calendar event title"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:453
+msgid "Title of the event in everyone's calendar. Placeholders: {page_title}, {name}, {company} and other field keys."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:457
+msgid "Emails"
+msgstr ""
+
+#. translators: %s: link to settings
+#: includes/admin/class-page-editor.php:462
+#, php-format
+msgid "Confirmation and notification emails are edited in %s."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:480
+msgid "Publish this booking page first, then add it to a page."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:483
+msgid "With the block editor"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:485
+msgid "Open the page (or create one under Pages → Add New Page)."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:486
+msgid "Click + (Add block), search for \"Booking page\" and insert it."
+msgstr ""
+
+#. translators: %s: booking page title
+#: includes/admin/class-page-editor.php:490
+#, php-format
+msgid "Pick \"%s\" in the block."
+msgstr ""
+
+#. translators: %s: booking page title
+#: includes/admin/class-page-editor.php:490
+msgid "(this booking page)"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:493
+msgid "Optional: choose \"Wide width\" in the block toolbar to give the calendar more room. Then update the page."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:495
+msgid "Anywhere else"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:495
+msgid "classic editor, Shortcode block, widgets, page builders or theme hooks – paste:"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:497
+msgid "The calendar adapts to the space it gets: side by side from about 900 px wide, stacked in narrower columns and on phones. Use one booking calendar per page."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:502
+msgid "In the page's Layout panel (block editor sidebar or the box below the editor), set Sidebars to \"No Sidebars\" so the calendar gets the full content width."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:503
+msgid "Keep Content Container on \"Default\". \"Full Width\" removes the side padding, so only use it if you place the block inside a container that adds its own width and padding."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:504
+msgid "With GP Premium you can also show the calendar through Elements: create a Block element, add the Booking page block, and choose where it appears."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:510
+msgid "The Booking page block works inside Container, Grid and Element blocks. Give the container a max width (e.g. 1100 px) and padding to build a landing section around the calendar."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:518
+#: includes/admin/class-page-editor.php:562
+msgid "Shown on"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:525
+msgid "Not added to any page yet, so visitors can't see it."
+msgstr ""
+
+#: includes/admin/class-page-editor.php:561
+msgid "Upcoming bookings"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:563
+msgid "Shortcode"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:580
+msgid "Not bookable"
+msgstr ""
+
+#: includes/admin/class-page-editor.php:612
+msgid "Not on any page"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:129
+msgid "Cap is enabled but the server address, site key or secret key is missing, so Cap is not used yet."
+msgstr ""
+
+#. translators: %s: error message
+#: includes/admin/class-settings-page.php:134
+#: includes/admin/class-settings-page.php:168
+#, php-format
+msgid "Could not verify the Cap connection: %s"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:136
+msgid "Cap connection verified."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:163
+msgid "Enter the server address, site key and secret key first."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:170
+msgid "Cap is reachable and accepts the keys."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:214
+msgid "Getting started"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:217
+msgid "Connect this site to Google"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:218
+msgid "follow the guide below and save your Client ID and Client secret."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:221
+msgid "Add employees"
+msgstr ""
+
+#. translators: 1: connected employees, 2: total employees
+#: includes/admin/class-settings-page.php:224
+#, php-format
+msgid "and connect their Google Calendars (%1$d of %2$d connected)."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:228
+msgid "Create a booking page"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:229
+msgid "choose hosts, meeting lengths, opening hours and form fields."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:232
+msgid "Insert it on a page"
+msgstr ""
+
+#. translators: %s: shortcode example
+#: includes/admin/class-settings-page.php:236
+#, php-format
+msgid "edit a page, add the \"Booking page\" block and pick the booking page in it. Or paste the shortcode shown on the booking page, e.g. %s. Each booking page shows step-by-step instructions (including GeneratePress/GenerateBlocks tips when those are active) and which pages it is on."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:248
+msgid "1. Google connection"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:249
+msgid "Bookings use Google Calendar to check when employees are busy, to create the meeting in their calendar and to generate a Google Meet link. To allow this, the site needs its own \"OAuth client\" in Google Cloud. This is free and takes about 10 minutes. You only do it once."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:252
+msgid "Step-by-step guide"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:255
+msgid "Create a Google Cloud project."
+msgstr ""
+
+#. translators: %s: link
+#: includes/admin/class-settings-page.php:259
+#, php-format
+msgid "Open %s and sign in with a Google account that belongs to your company (ideally a Google Workspace admin). Name the project, e.g. \"Website bookings\", and click Create. Make sure the new project is selected in the project picker at the top."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:265
+msgid "Enable the Google Calendar API."
+msgstr ""
+
+#. translators: %s: link
+#: includes/admin/class-settings-page.php:269
+#, php-format
+msgid "Open %s and click Enable. (Google Meet links are created through the Calendar API, so no separate Meet API is needed.)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:270
+msgid "Google Calendar API"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:275
+msgid "Configure the consent screen."
+msgstr ""
+
+#. translators: %s: link
+#: includes/admin/class-settings-page.php:279
+#, php-format
+msgid "Open %s and click Get started. Enter an app name (e.g. your company name) and a support email."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:280
+msgid "Google Auth Platform"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:284
+msgid "<strong>Audience: Internal</strong> – recommended if all employees use your Google Workspace. No review by Google is needed and access never expires."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:285
+msgid "<strong>Audience: External</strong> – needed for personal Gmail accounts. After creating it, go to <em>Audience</em> and click <strong>Publish app</strong>. Apps left in \"Testing\" lose access after 7 days and every employee would need to reconnect. Google will show an \"unverified app\" warning when connecting; click <em>Advanced → Go to (app name)</em> to continue."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:287
+msgid "You don't have to add scopes manually; the plugin asks for \"See and edit events on all your calendars\" and \"See all your calendars\" when an employee connects."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:290
+msgid "Create an OAuth client."
+msgstr ""
+
+#. translators: %s: link
+#: includes/admin/class-settings-page.php:294
+#, php-format
+msgid "Open %s, click Create client and choose Application type \"Web application\". Under \"Authorized redirect URIs\", click Add URI and paste exactly this address:"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:295
+msgid "Clients"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:299
+msgid "Click Create. Leave \"Authorized JavaScript origins\" empty."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:301
+msgid "Google requires https:// for redirect URIs (except localhost). Enable SSL on this site first."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:305
+msgid "Copy the Client ID and Client secret"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:306
+msgid "that Google shows into the fields below and click Save settings. (If you closed the dialog, open the client in the list; the secret can be found or re-created there.)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:309
+msgid "Connect each employee's calendar."
+msgstr ""
+
+#. translators: %s: link to the Employees page
+#: includes/admin/class-settings-page.php:313
+#, php-format
+msgid "Go to %s, add the employee and either click \"Connect Google Calendar\" (if you can sign in to their Google account) or click \"Create connect link\" and send the link to the employee. They sign in, approve access and are done – no WordPress account needed."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:319
+msgid "Troubleshooting: \"redirect_uri_mismatch\" means the redirect URI in Google doesn't exactly match the one above (check http vs https and www). \"access_denied\" usually means the app is Internal but the employee uses an account outside your Workspace, or the app is External and still in Testing without the employee added as a test user."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:324
+msgid "Client ID"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:330
+msgid "Client secret"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:332
+#: includes/admin/class-settings-page.php:646
+msgid "Saved – leave empty to keep it"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:333
+msgid "Changing the client later requires all employees to reconnect."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:340
+msgid "Client configured."
+msgstr ""
+
+#. translators: 1: connected employees, 2: total employees
+#: includes/admin/class-settings-page.php:343
+#, php-format
+msgid "%1$d of %2$d employees have connected their calendar."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:346
+msgid "Not configured yet."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:351
+msgid "Connection alerts"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:354
+msgid "If an employee's Google connection stops working (password changed, access removed, app still in Testing mode, calendar deleted…), their booking pages show no times. An email is sent here once when that happens, with a link to reconnect. Separate several addresses with commas. Empty = the site admin email. The connection is also checked once a day, and a warning is shown in wp-admin until it is fixed."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:355
+msgid "Also email the affected employee (they can reconnect themselves with the link)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:362
+msgid "2. Calendar invitations"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:363
+msgid "Every booking creates an event with a Google Meet link in the organizing host's calendar. Everyone receives exactly one email per booking, change or cancellation: the one with the calendar invitation. Choose who sends it:"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:367
+msgid "Sent by Google Calendar (recommended)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:368
+msgid "Google emails the invitation from the organizing host's calendar to the booker, guests and other hosts, with the Meet link, time and the invitation text below. Updates and cancellations also come from Google. Accept/decline answers show up in the host's calendar. WordPress only emails the organizing host (Google doesn't notify the organizer of their own event), using the host emails below."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:372
+msgid "Sent by WordPress"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:373
+msgid "Google sends nothing. Instead, each person gets one of the emails below with the invitation (.ics) attached, which Gmail, Outlook and Apple Mail show with Accept/Decline buttons. Use this if you want all email to come from this website and to fully control the wording. Make sure WordPress can send email reliably (e.g. with WP Mail SMTP)."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:378
+msgid "Invitation text"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:381
+msgid "The description of the calendar event, shown in the invitation email and in everyone's calendar. When Google sends the invitations, this is all the booker receives, so keep the answers and the links here. Plain text; links become clickable. The same placeholders as in the emails below work here (e.g. {answers}, {reschedule_link}, {cancel_link}, {company}); the line with {reschedule_link} is left out on booking pages where rescheduling is off. The event title is set per booking page."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:388
+msgid "3. Emails"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:389
+msgid "These emails are sent by WordPress (wp_mail). You can change the sender, switch each email on or off, and edit subjects and texts. Basic HTML such as <strong> and <a> is allowed in the texts; line breaks are kept and links become clickable."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:393
+msgid "Invitations are currently sent by Google, so only the three \"(to hosts)\" emails are used, and only for the organizing host. Switch to \"Sent by WordPress\" above to use all of them."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:394
+msgid "Invitations are currently sent by WordPress: every email below is used, each with the invitation attached (except to the organizing host, who already has the event)."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:399
+msgid "Sender name"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:403
+msgid "Sender email"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:406
+msgid "Leave empty to use the WordPress default. Use an address on your own domain so emails aren't marked as spam. Replies go to the host (for booker emails) or the booker (for host emails)."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:407
+msgid "All email is sent with wp_mail(), so mail plugins such as WP Mail SMTP are used automatically – nothing to configure here. If WP Mail SMTP's \"Force From Email\"/\"Force From Name\" is on, its sender wins over the fields above."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:413
+msgid "Available placeholders"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:428
+msgid "With Google invitations: only to the organizing host."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:428
+msgid "Only used when invitations are sent by WordPress."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:429
+msgid "Restore default"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:431
+msgid "Subject"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:440
+msgid "4. Public holidays and closed days"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:446
+msgid "Countries"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:451
+msgid "Tick every country whose public holidays should close your booking pages, e.g. where you and your colleagues live. Booking pages with \"Closed on public holidays\" are then closed on all of them. Holidays are read from Google's public holiday calendars through a connected employee's account and cached for a day."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:452
+msgid "Other Google calendars"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:454
+msgid "Optional. One calendar ID per line – another country's holiday calendar, or a shared company calendar with all-day \"closed\" events. Find a calendar's ID in Google Calendar under Settings → (calendar) → Integrate calendar."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:455
+msgid "Also close on observances (e.g. Christmas Eve, Midsummer Eve, New Year's Eve)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:459
+msgid "Closed dates"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:462
+msgid "Extra days when nobody can be booked on any booking page. One date (YYYY-MM-DD) or range (YYYY-MM-DD - YYYY-MM-DD) per line; text after the date is ignored and can be used as a note. For one person's vacation, simply add a \"Busy\" event to their Google Calendar instead."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:469
+msgid "5. Privacy (GDPR)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:472
+msgid "Consent checkbox"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:474
+msgid "Visitors must tick a checkbox before booking"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:479
+msgid "{privacy_policy} becomes a link to your privacy policy page, {site_name} your site name. The time of consent is saved with each booking."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:481
+msgid "View privacy policy page"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:483
+msgid "No privacy policy page is set yet –"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:483
+msgid "choose one under Settings → Privacy"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:490
+msgid "Delete personal data"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:492
+msgid "days after the meeting"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:493
+msgid "Names, emails, answers, guests and IP addresses are then removed from the booking and its history log; the time, booking page and hosts are kept for statistics. Runs once a day. 0 keeps data until deleted by hand. Events in Google Calendar are not touched."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:497
+msgid "Requests from visitors"
+msgstr ""
+
+#. translators: 1: link to export tool, 2: link to erase tool, 3: link to policy guide
+#: includes/admin/class-settings-page.php:503
+#, php-format
+msgid "If someone asks for their data, use WordPress's %1$s or %2$s tools with their email address – bookings (as booker or guest) are included. Suggested text for your privacy policy is available in the %3$s."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:504
+msgid "Export Personal Data"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:505
+msgid "Erase Personal Data"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:506
+msgid "privacy policy guide"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:516
+msgid "6. Spam and abuse protection"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:517
+msgid "Every booking creates a real calendar event and sends emails, so it is worth keeping bots out. The checks below are combined; blocked attempts are listed in the History log as \"spam.blocked\" so you can see what is caught."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:520
+msgid "Honeypot"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:522
+msgid "Add a hidden field that people never see but simple bots fill in"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:526
+msgid "Time-to-submit check"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:528
+msgid "seconds"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:529
+msgid "Reject bookings sent faster than this after the calendar loaded. People need far longer to pick a time and fill in the form; scripts don't. The start time is signed by the server, so it can't be faked and works with page caching. 0 turns the check off."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:533
+msgid "Headless browser detection"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:535
+msgid "Block automated browsers and scripts"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:536
+msgid "Looks for signs of automation such as navigator.webdriver, \"HeadlessChrome\", Puppeteer/Playwright/Selenium, and HTTP libraries like curl or python-requests. Works without Cap. If you use Cap, also enable \"block automated browsers\" on the Cap site key – it runs a deeper check inside the browser."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:540
+msgid "Rate limit"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:542
+msgid "booking attempts per IP address per hour"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:543
+msgid "0 turns the limit off. Behind a proxy or CDN, make sure WordPress sees the visitor's real IP address (REMOTE_ADDR), otherwise everyone shares one limit."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:547
+msgid "Blocklist"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:550
+msgid "One entry per line: an email address, a domain (also blocks its subdomains) or an IP address. Lines starting with # are ignored."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:555
+msgid "Cap – self-hosted proof-of-work CAPTCHA"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:556
+msgid "Cap makes the visitor's browser solve a small computational puzzle (usually under a second) before booking. There are no images to click, no cookies and no third-party tracking. It runs as two Docker containers on your own server: Cap itself and Valkey, which Cap uses for storage."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:559
+msgid "How to run Cap"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:562
+msgid "On a server with Docker, create a folder with a file named docker-compose.yml containing:"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:571
+msgid "replace-with-a-random-string-of-at-least-32-characters"
+msgstr ""
+
+#. translators: %s: command
+#: includes/admin/class-settings-page.php:595
+#, php-format
+msgid "Generate the admin key with e.g. %s. It is the password for Cap's dashboard."
+msgstr ""
+
+#. translators: 1: command, 2: command
+#: includes/admin/class-settings-page.php:604
+#, php-format
+msgid "Start it with %1$s. Check that both containers run with %2$s."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:610
+msgid "Cap only has to be reachable from WordPress, e.g. as http://cap:3000 when WordPress runs in the same Docker network. Visitors' browsers talk to this site, and WordPress passes their requests on to Cap. If you prefer, you can also make Cap reachable over HTTPS from the internet (e.g. https://cap.example.com through your reverse proxy) and enter that as the public address, so browsers talk to Cap directly."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:611
+msgid "Open Cap's dashboard on port 3000 (e.g. through an SSH tunnel, or at its public address), log in with the admin key and create a site key. Copy the site key and its secret key (the secret is shown once). In the site key's settings: keep \"instrumentation challenges\" on, and turn on \"block automated browsers\" for Cap's own headless browser detection. If browsers talk to Cap directly, you can also restrict the key to your site's domain (CORS origins). You can tune the difficulty too."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:612
+msgid "Fill in the fields below, click \"Test connection\", then tick \"Use Cap\" and save. The connection is also tested when you save."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:614
+msgid "To update Cap later: docker compose pull && docker compose up -d. If the dashboard isn't reachable, Cap's documentation suggests adding network_mode: \"host\" to the cap service."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:619
+msgid "Use Cap"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:621
+msgid "Require a solved Cap challenge for every booking"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:622
+msgid "If Cap can't be reached, bookings are refused (and an error is logged), so keep the Cap server running while this is enabled."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:626
+msgid "Cap server"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:629
+msgid "The address of your Cap server as WordPress reaches it, without the site key – e.g. http://cap:3000 when WordPress runs in the same Docker network."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:633
+msgid "Public Cap address (optional)"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:636
+msgid "Only if visitors' browsers should talk to Cap directly instead of through WordPress. It must be https:// when the site is."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:640
+msgid "Site key"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:644
+msgid "Secret key"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:647
+msgid "The site key's secret – not the dashboard admin key."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:653
+msgid "Test connection"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:655
+msgid "Checks that WordPress reaches the Cap server and that it accepts the site key and secret key, using the values above before you save."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:659
+msgid "Widget"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:662
+msgid "Visible"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:662
+msgid "An \"I'm a human\" box above the booking button that the visitor clicks."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:663
+msgid "Invisible"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:663
+msgid "The puzzle is solved in the background when the visitor clicks \"Confirm booking\"."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:671
+msgid "7. Appearance"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:674
+msgid "Accent color"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:677
+msgid "Used for buttons, available dates and times in the booking calendar, and the line at the top of emails."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:681
+msgid "Time format"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:689
+msgid "Week numbers"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:690
+msgid "Show ISO week numbers in the date picker"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:696
+msgid "8. Data"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:699
+msgid "Keep history log for"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:701
+msgid "days"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:702
+msgid "Older log entries are deleted automatically. 0 keeps them forever. Bookings themselves are never deleted automatically."
+msgstr ""
+
+#: includes/admin/class-settings-page.php:706
+msgid "Uninstall"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:707
+msgid "Delete all bookings, employees, booking pages, log and settings when the plugin is deleted"
+msgstr ""
+
+#: includes/admin/class-settings-page.php:712
+msgid "Save settings"
+msgstr ""
+
+#: includes/class-bookings.php:113
+#: includes/class-bookings.php:347
+msgid "Sorry, that time is no longer available. Please choose another time."
+msgstr ""
+
+#: includes/class-bookings.php:156
+msgid "We could not create the meeting right now. Please try again in a moment."
+msgstr ""
+
+#: includes/class-bookings.php:276
+msgid "This booking has already been cancelled."
+msgstr ""
+
+#: includes/class-bookings.php:279
+msgid "This meeting has already started and can no longer be cancelled."
+msgstr ""
+
+#: includes/class-bookings.php:313
+msgid "an administrator"
+msgstr ""
+
+#: includes/class-bookings.php:313
+msgid "the booker"
+msgstr ""
+
+#: includes/class-bookings.php:336
+#: includes/class-frontend.php:324
+msgid "This meeting can no longer be rescheduled."
+msgstr ""
+
+#: includes/class-bookings.php:339
+msgid "Please choose a different time."
+msgstr ""
+
+#: includes/class-bookings.php:373
+msgid "We could not move the meeting right now. Please try again in a moment."
+msgstr ""
+
+#: includes/class-bookings.php:433
+msgid "(deleted)"
+msgstr ""
+
+#: includes/class-bookings.php:484
+msgid "Yes"
+msgstr ""
+
+#: includes/class-bookings.php:484
+msgid "No"
+msgstr ""
+
+#. translators: 1: site name, 2: employee name
+#: includes/class-employees.php:331
+#, php-format
+msgid "[%1$s] Google Calendar connection for %2$s stopped working"
+msgstr ""
+
+#. translators: %s: employee name
+#: includes/class-employees.php:337
+#, php-format
+msgid "The Google Calendar connection for %s has stopped working."
+msgstr ""
+
+#: includes/class-employees.php:341
+msgid "These booking pages show no available times until it is fixed:"
+msgstr ""
+
+#. translators: %s: error message from Google
+#: includes/class-employees.php:344
+#, php-format
+msgid "Google said: %s"
+msgstr ""
+
+#: includes/class-employees.php:345
+msgid "How to fix it"
+msgstr ""
+
+#. translators: %s: employee name
+#: includes/class-employees.php:347
+#, php-format
+msgid "%s opens this link, signs in with Google and clicks Allow. The link works for 7 days:"
+msgstr ""
+
+#: includes/class-employees.php:349
+msgid "An administrator can also reconnect in wp-admin:"
+msgstr ""
+
+#: includes/class-employees.php:350
+msgid "Common causes: the Google password was changed, access was removed in the Google account settings, the Google Cloud app is still in \"Testing\" mode (access expires after 7 days), or a selected calendar was deleted or is no longer shared."
+msgstr ""
+
+#: includes/class-frontend.php:140
+msgid "Booking page not found or not published."
+msgstr ""
+
+#: includes/class-frontend.php:162
+#: includes/class-frontend.php:308
+msgid "Loading…"
+msgstr ""
+
+#: includes/class-frontend.php:163
+msgid "Please enable JavaScript to book a meeting."
+msgstr ""
+
+#: includes/class-frontend.php:281
+msgid "Select a date"
+msgstr ""
+
+#: includes/class-frontend.php:282
+msgid "Select a time"
+msgstr ""
+
+#: includes/class-frontend.php:283
+msgid "No available times on this day."
+msgstr ""
+
+#: includes/class-frontend.php:284
+msgid "No available times this month."
+msgstr ""
+
+#: includes/class-frontend.php:285
+msgid "Go to next available date"
+msgstr ""
+
+#: includes/class-frontend.php:286
+msgid "There are no available times at the moment. Please check back later."
+msgstr ""
+
+#: includes/class-frontend.php:287
+msgid "Booking is not available at the moment."
+msgstr ""
+
+#: includes/class-frontend.php:288
+msgid "Previous month"
+msgstr ""
+
+#: includes/class-frontend.php:289
+msgid "Next month"
+msgstr ""
+
+#: includes/class-frontend.php:290
+msgctxt "week number column heading"
+msgid "W"
+msgstr ""
+
+#: includes/class-frontend.php:293
+msgid "Duration"
+msgstr ""
+
+#: includes/class-frontend.php:296
+msgid "With"
+msgstr ""
+
+#: includes/class-frontend.php:297
+msgid "Back"
+msgstr ""
+
+#: includes/class-frontend.php:298
+msgid "Your details"
+msgstr ""
+
+#: includes/class-frontend.php:299
+msgid "Confirm booking"
+msgstr ""
+
+#: includes/class-frontend.php:300
+msgid "Booking…"
+msgstr ""
+
+#: includes/class-frontend.php:301
+msgid "+ Add guests"
+msgstr ""
+
+#: includes/class-frontend.php:302
+#: includes/class-settings.php:71
+msgid "Guest emails"
+msgstr ""
+
+#: includes/class-frontend.php:303
+msgid "Separate multiple emails with commas. Guests also receive the invitation."
+msgstr ""
+
+#: includes/class-frontend.php:304
+msgid "optional"
+msgstr ""
+
+#: includes/class-frontend.php:305
+#: includes/class-rest.php:498
+msgid "This field is required."
+msgstr ""
+
+#: includes/class-frontend.php:306
+#: includes/class-rest.php:481
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: includes/class-frontend.php:307
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: includes/class-frontend.php:309
+#: includes/class-mailer.php:235
+msgid "Join with Google Meet"
+msgstr ""
+
+#: includes/class-frontend.php:310
+msgid "Cancel your meeting"
+msgstr ""
+
+#: includes/class-frontend.php:311
+msgid "Reason for cancelling (optional)"
+msgstr ""
+
+#: includes/class-frontend.php:312
+msgid "Cancel meeting"
+msgstr ""
+
+#: includes/class-frontend.php:313
+msgid "Cancelling…"
+msgstr ""
+
+#: includes/class-frontend.php:314
+msgid "Your meeting has been cancelled. Everyone has been notified."
+msgstr ""
+
+#: includes/class-frontend.php:315
+msgid "This meeting has already been cancelled."
+msgstr ""
+
+#: includes/class-frontend.php:316
+msgid "This meeting has already taken place and can no longer be cancelled."
+msgstr ""
+
+#: includes/class-frontend.php:317
+msgid "Book a new time"
+msgstr ""
+
+#: includes/class-frontend.php:318
+msgid "Pick a new time"
+msgstr ""
+
+#: includes/class-frontend.php:319
+msgid "Current time"
+msgstr ""
+
+#: includes/class-frontend.php:320
+msgid "New time"
+msgstr ""
+
+#: includes/class-frontend.php:321
+msgid "Move meeting"
+msgstr ""
+
+#: includes/class-frontend.php:322
+msgid "Moving…"
+msgstr ""
+
+#: includes/class-frontend.php:323
+msgid "Pick a new time instead"
+msgstr ""
+
+#: includes/class-frontend.php:325
+#: includes/class-rest.php:417
+msgid "Please accept to continue."
+msgstr ""
+
+#: includes/class-frontend.php:326
+msgid "Verifying you are human…"
+msgstr ""
+
+#: includes/class-frontend.php:327
+msgid "Please complete the verification above."
+msgstr ""
+
+#: includes/class-frontend.php:328
+msgid "The verification could not be completed. Please try again."
+msgstr ""
+
+#: includes/class-google.php:97
+#: includes/class-google.php:122
+msgid "This link has expired"
+msgstr ""
+
+#: includes/class-google.php:97
+#: includes/class-google.php:122
+msgid "Please ask your administrator for a new link to connect your Google Calendar."
+msgstr ""
+
+#. translators: %s: error message
+#: includes/class-google.php:114
+#: includes/class-google.php:119
+#: includes/class-google.php:149
+msgid "Connection failed"
+msgstr ""
+
+#: includes/class-google.php:114
+msgid "The request was invalid or has expired. Please try again."
+msgstr ""
+
+#. translators: %s: error message
+#: includes/class-google.php:149
+#, php-format
+msgid "Google returned an error: %s"
+msgstr ""
+
+#: includes/class-google.php:151
+msgid "Google Calendar connected"
+msgstr ""
+
+#: includes/class-google.php:151
+msgid "Thank you! Your calendar is now connected and you can close this window."
+msgstr ""
+
+#: includes/class-google.php:180
+msgid "Google did not return a refresh token. Remove the app under myaccount.google.com/permissions and connect again."
+msgstr ""
+
+#: includes/class-google.php:226
+msgid "Google Calendar is not connected."
+msgstr ""
+
+#: includes/class-holidays.php:25
+msgid "Sweden"
+msgstr ""
+
+#: includes/class-holidays.php:26
+msgid "Norway"
+msgstr ""
+
+#: includes/class-holidays.php:27
+msgid "Denmark"
+msgstr ""
+
+#: includes/class-holidays.php:28
+msgid "Finland"
+msgstr ""
+
+#: includes/class-holidays.php:29
+msgid "Germany"
+msgstr ""
+
+#: includes/class-holidays.php:30
+msgid "Netherlands"
+msgstr ""
+
+#: includes/class-holidays.php:31
+msgid "United Kingdom"
+msgstr ""
+
+#: includes/class-holidays.php:32
+msgid "Ireland"
+msgstr ""
+
+#: includes/class-holidays.php:33
+msgid "France"
+msgstr ""
+
+#: includes/class-holidays.php:34
+msgid "Spain"
+msgstr ""
+
+#: includes/class-holidays.php:35
+msgid "Italy"
+msgstr ""
+
+#: includes/class-holidays.php:36
+msgid "Poland"
+msgstr ""
+
+#: includes/class-holidays.php:37
+msgid "Austria"
+msgstr ""
+
+#: includes/class-holidays.php:38
+msgid "United States"
+msgstr ""
+
+#: includes/class-holidays.php:39
+msgid "Canada"
+msgstr ""
+
+#: includes/class-holidays.php:40
+msgid "Australia"
+msgstr ""
+
+#: includes/class-holidays.php:92
+msgid "Blocked"
+msgstr ""
+
+#: includes/class-pages.php:48
+#: includes/class-pages.php:49
+#: assets/js/block.js:43
+msgid "Add booking page"
+msgstr ""
+
+#: includes/class-pages.php:50
+msgid "Edit booking page"
+msgstr ""
+
+#: includes/class-pages.php:52
+msgid "No booking pages yet."
+msgstr ""
+
+#: includes/class-pages.php:103
+msgid "Company"
+msgstr ""
+
+#: includes/class-pages.php:111
+msgid "Job title"
+msgstr ""
+
+#: includes/class-pages.php:127
+msgid "What would you like to discuss?"
+msgstr ""
+
+#: includes/class-pages.php:130
+msgid "Share anything that will help us prepare for the meeting."
+msgstr ""
+
+#: includes/class-pages.php:170
+msgid ""
+"<h3>You're booked, {name}!</h3>\n"
+"<p>A calendar invitation with the Google Meet link is on its way to {email}.</p>\n"
+"<p>Looking forward to talking to you.</p>"
+msgstr ""
+
+#: includes/class-privacy.php:42
+msgid "privacy policy"
+msgstr ""
+
+#: includes/class-privacy.php:60
+msgid "When you book a meeting, we store the details you enter in the booking form (such as name, email, company, phone and message), the email addresses of any guests you add, the chosen time, your time zone and your IP address. We use them to arrange the meeting, send confirmations and invitations, and protect the booking form against abuse."
+msgstr ""
+
+#: includes/class-privacy.php:61
+msgid "The meeting is created in our Google Calendar with a Google Meet link, so your name, email address and answers are also processed by Google as our service provider."
+msgstr ""
+
+#: includes/class-privacy.php:63
+msgid "To keep out spam bots, your browser solves a small puzzle with our own verification server (Cap) before the booking is sent. No cookies are used for this."
+msgstr ""
+
+#: includes/class-privacy.php:66
+msgid "Photos of the people you can book may be loaded from Gravatar, a service run by Automattic, which then receives your IP address."
+msgstr ""
+
+#. translators: %d: number of days
+#: includes/class-privacy.php:70
+#, php-format
+msgid "Booking details are deleted %d days after the meeting."
+msgstr ""
+
+#: includes/class-privacy.php:71
+msgid "Booking details are kept until you ask us to delete them."
+msgstr ""
+
+#: includes/class-privacy.php:187
+msgid "IP address"
+msgstr ""
+
+#: includes/class-privacy.php:191
+msgid "Consent given"
+msgstr ""
+
+#: includes/class-privacy.php:196
+msgid "Invited as guest by"
+msgstr ""
+
+#: includes/class-privacy.php:239
+msgid "Booking data was anonymized. Events already in Google Calendar must be removed there if needed."
+msgstr ""
+
+#: includes/class-protection.php:179
+msgid "We could not accept this booking. Please try again or contact us."
+msgstr ""
+
+#: includes/class-protection.php:190
+msgid "Your session has expired. Please reload the page and try again."
+msgstr ""
+
+#: includes/class-protection.php:211
+msgid "Too many booking attempts. Please try again later."
+msgstr ""
+
+#: includes/class-protection.php:217
+msgid "The spam check failed. Please try again."
+msgstr ""
+
+#. translators: %d: HTTP status code
+#: includes/class-protection.php:368
+#, php-format
+msgid "The Cap server answered with HTTP %d but not with a verification result. Check the URL and site key."
+msgstr ""
+
+#: includes/class-protection.php:371
+msgid "The Cap server rejected the site key or the secret key."
+msgstr ""
+
+#: includes/class-rest.php:307
+msgid "Booking page not found."
+msgstr ""
+
+#: includes/class-rest.php:404
+msgid "Please choose a time."
+msgstr ""
+
+#: includes/class-rest.php:414
+#: includes/class-rest.php:506
+msgid "Please check the highlighted fields."
+msgstr ""
+
+#: includes/class-rest.php:494
+msgid "Please choose one of the options."
+msgstr ""
+
+#. translators: %s: email address
+#: includes/class-rest.php:539
+#, php-format
+msgid "\"%s\" is not a valid email address."
+msgstr ""
+
+#: includes/class-rest.php:542
+msgid "Please enter valid email addresses."
+msgstr ""
+
+#. translators: %d: maximum number of guests
+#: includes/class-rest.php:554
+#: includes/class-rest.php:558
+#, php-format
+msgid "You can add at most %d guests."
+msgstr ""
+
+#: includes/class-rest.php:588
+msgid "We could not find this booking."
+msgstr ""
+
+#: includes/class-rest.php:601
+#: includes/class-rest.php:622
+#: includes/class-rest.php:646
+#: includes/class-rest.php:663
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: includes/class-rest.php:634
+msgid "Your meeting has been moved"
+msgstr ""
+
+#: includes/class-rest.php:634
+msgid "Everyone has been notified and the calendar invitation has been updated. The Google Meet link stays the same."
+msgstr ""
+
+#: includes/class-settings.php:36
+msgid "Booking confirmation (to booker)"
+msgstr ""
+
+#: includes/class-settings.php:36
+msgid "Sent to the person who booked."
+msgstr ""
+
+#: includes/class-settings.php:37
+msgid "Guest invitation (to guests)"
+msgstr ""
+
+#: includes/class-settings.php:37
+msgid "Sent to each guest added by the booker."
+msgstr ""
+
+#: includes/class-settings.php:38
+msgid "New booking (to hosts)"
+msgstr ""
+
+#: includes/class-settings.php:38
+msgid "Sent to the employees hosting the meeting."
+msgstr ""
+
+#: includes/class-settings.php:39
+msgid "Rescheduled (to booker)"
+msgstr ""
+
+#: includes/class-settings.php:39
+msgid "Sent to the booker when the meeting is moved to a new time."
+msgstr ""
+
+#: includes/class-settings.php:40
+msgid "Rescheduled (to guests)"
+msgstr ""
+
+#: includes/class-settings.php:40
+msgid "Sent to guests when the meeting is moved."
+msgstr ""
+
+#: includes/class-settings.php:41
+msgid "Rescheduled (to hosts)"
+msgstr ""
+
+#: includes/class-settings.php:41
+msgid "Sent to the hosts when the meeting is moved."
+msgstr ""
+
+#: includes/class-settings.php:42
+msgid "Cancellation (to booker)"
+msgstr ""
+
+#: includes/class-settings.php:42
+msgid "Sent to the booker when a meeting is cancelled."
+msgstr ""
+
+#: includes/class-settings.php:43
+msgid "Cancellation (to guests)"
+msgstr ""
+
+#: includes/class-settings.php:43
+msgid "Sent to guests when a meeting is cancelled."
+msgstr ""
+
+#: includes/class-settings.php:44
+msgid "Cancellation (to hosts)"
+msgstr ""
+
+#: includes/class-settings.php:44
+msgid "Sent to the hosts when a meeting is cancelled."
+msgstr ""
+
+#: includes/class-settings.php:55
+msgid "Booker name"
+msgstr ""
+
+#: includes/class-settings.php:56
+msgid "Booker email"
+msgstr ""
+
+#: includes/class-settings.php:57
+msgid "Name of the person receiving the email"
+msgstr ""
+
+#: includes/class-settings.php:58
+msgid "Booking page title"
+msgstr ""
+
+#: includes/class-settings.php:59
+msgid "Meeting date (in the recipient's timezone)"
+msgstr ""
+
+#: includes/class-settings.php:60
+msgid "Start time"
+msgstr ""
+
+#: includes/class-settings.php:61
+msgid "End time"
+msgstr ""
+
+#: includes/class-settings.php:62
+msgid "Timezone"
+msgstr ""
+
+#: includes/class-settings.php:63
+msgid "Duration in minutes"
+msgstr ""
+
+#: includes/class-settings.php:64
+msgid "Host name(s)"
+msgstr ""
+
+#: includes/class-settings.php:65
+msgid "Google Meet link"
+msgstr ""
+
+#: includes/class-settings.php:66
+msgid "Link where the booker can cancel"
+msgstr ""
+
+#: includes/class-settings.php:67
+msgid "Link where the booker can pick a new time"
+msgstr ""
+
+#: includes/class-settings.php:68
+msgid "Previous date (rescheduling emails)"
+msgstr ""
+
+#: includes/class-settings.php:69
+msgid "Previous start time (rescheduling emails)"
+msgstr ""
+
+#: includes/class-settings.php:70
+msgid "Booking page URL (to book a new time)"
+msgstr ""
+
+#: includes/class-settings.php:72
+msgid "All form answers"
+msgstr ""
+
+#: includes/class-settings.php:73
+msgid "Reason given when cancelling"
+msgstr ""
+
+#: includes/class-settings.php:74
+msgid "Site name"
+msgstr ""
+
+#: includes/class-settings.php:75
+msgid "Any form field by its key, e.g. {company} or {phone}"
+msgstr ""
+
+#: includes/class-settings.php:89
+msgid ""
+"Booked via {site_name}.\n"
+"\n"
+"{answers}\n"
+"\n"
+"Need to change something?\n"
+"Pick a new time: {reschedule_link}\n"
+"Cancel: {cancel_link}"
+msgstr ""
+
+#: includes/class-settings.php:115
+msgid "I agree that {site_name} stores my details to arrange this meeting, as described in the {privacy_policy}."
+msgstr ""
+
+#: includes/class-settings.php:121
+msgid "Confirmed: {page_title} on {date} at {time}"
+msgstr ""
+
+#: includes/class-settings.php:122
+msgid ""
+"Hi {name},\n"
+"\n"
+"Your meeting is booked. Here are the details:\n"
+"\n"
+"<strong>{page_title}</strong>\n"
+"{date}, {time} – {end_time} ({timezone})\n"
+"With: {host}\n"
+"Google Meet: {meet_link}\n"
+"\n"
+"{answers}\n"
+"\n"
+"Need to change something?\n"
+"Pick a new time: {reschedule_link}\n"
+"Cancel: {cancel_link}\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:128
+msgid "Invitation: {page_title} on {date} at {time}"
+msgstr ""
+
+#: includes/class-settings.php:129
+msgid ""
+"Hi,\n"
+"\n"
+"{name} has invited you to a meeting.\n"
+"\n"
+"<strong>{page_title}</strong>\n"
+"{date}, {time} – {end_time} ({timezone})\n"
+"With: {host}, {name}\n"
+"Google Meet: {meet_link}\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:135
+msgid "New booking: {name} – {date} {time}"
+msgstr ""
+
+#: includes/class-settings.php:136
+msgid ""
+"Hi {recipient_name},\n"
+"\n"
+"You have a new booking for <strong>{page_title}</strong>.\n"
+"\n"
+"When: {date}, {time} – {end_time} ({timezone})\n"
+"Google Meet: {meet_link}\n"
+"Guests: {guests}\n"
+"\n"
+"{answers}"
+msgstr ""
+
+#: includes/class-settings.php:142
+#: includes/class-settings.php:149
+msgid "Rescheduled: {page_title} is now on {date} at {time}"
+msgstr ""
+
+#: includes/class-settings.php:143
+msgid ""
+"Hi {name},\n"
+"\n"
+"Your meeting <strong>{page_title}</strong> has been moved.\n"
+"\n"
+"New time: {date}, {time} – {end_time} ({timezone})\n"
+"Previous time: {old_date}, {old_time}\n"
+"With: {host}\n"
+"Google Meet: {meet_link}\n"
+"\n"
+"Need to change something?\n"
+"Pick a new time: {reschedule_link}\n"
+"Cancel: {cancel_link}\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:150
+msgid ""
+"Hi,\n"
+"\n"
+"The meeting <strong>{page_title}</strong> with {name} has been moved.\n"
+"\n"
+"New time: {date}, {time} – {end_time} ({timezone})\n"
+"Previous time: {old_date}, {old_time}\n"
+"Google Meet: {meet_link}\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:156
+msgid "Rescheduled: {name} – now {date} {time}"
+msgstr ""
+
+#: includes/class-settings.php:157
+msgid ""
+"Hi {recipient_name},\n"
+"\n"
+"{name} ({email}) has moved <strong>{page_title}</strong>.\n"
+"\n"
+"New time: {date}, {time} – {end_time} ({timezone})\n"
+"Previous time: {old_date}, {old_time}\n"
+"Google Meet: {meet_link}"
+msgstr ""
+
+#: includes/class-settings.php:163
+#: includes/class-settings.php:170
+msgid "Cancelled: {page_title} on {date} at {time}"
+msgstr ""
+
+#: includes/class-settings.php:164
+msgid ""
+"Hi {name},\n"
+"\n"
+"Your meeting <strong>{page_title}</strong> on {date} at {time} ({timezone}) has been cancelled.\n"
+"\n"
+"Reason: {cancel_reason}\n"
+"\n"
+"You are welcome to book a new time: {booking_url}\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:171
+msgid ""
+"Hi,\n"
+"\n"
+"The meeting <strong>{page_title}</strong> with {name} on {date} at {time} ({timezone}) has been cancelled.\n"
+"\n"
+"Best regards,\n"
+"{site_name}"
+msgstr ""
+
+#: includes/class-settings.php:177
+msgid "Cancelled: {name} – {date} {time}"
+msgstr ""
+
+#: includes/class-settings.php:178
+msgid ""
+"Hi {recipient_name},\n"
+"\n"
+"The meeting <strong>{page_title}</strong> with {name} ({email}) on {date} at {time} ({timezone}) has been cancelled.\n"
+"\n"
+"Reason: {cancel_reason}"
+msgstr ""
+
+#: assets/js/block.js:12
+msgid "Lets visitors book a meeting."
+msgstr ""
+
+#: assets/js/block.js:24
+msgid "— Select a booking page —"
+msgstr ""
+
+#: assets/js/block.js:33
+msgid "The booking calendar is shown on the published page."
+msgstr ""
+
+#: assets/js/block.js:34
+msgid "Create a booking page under Bookings → Booking pages first."
+msgstr ""

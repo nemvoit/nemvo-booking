@@ -1,27 +1,52 @@
 <?php
+/**
+ * Employees screen.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
 use NemvoBooking\Employees;
 use NemvoBooking\Google;
 use NemvoBooking\Log;
 use NemvoBooking\Pages;
+use NemvoBooking\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
-class EmployeesPage {
+/**
+ * Bookings → Employees: adding employees and connecting their Google Calendars.
+ */
+class Employees_Page {
 
 	const PAGE = 'nemvo-booking-employees';
 
+	/**
+	 * Hooks in the admin-post handlers.
+	 */
 	public static function init() {
 		foreach ( array( 'save', 'delete', 'connect', 'disconnect', 'link', 'refresh' ) as $action ) {
 			add_action( 'admin_post_nemvo_booking_employee_' . $action, array( __CLASS__, 'handle_' . $action ) );
 		}
 	}
 
+	/**
+	 * URL of an admin-post action for an employee, with a nonce.
+	 *
+	 * @param string $action Action name.
+	 * @param int    $id     Employee ID.
+	 * @return string
+	 */
 	private static function action_url( string $action, int $id ): string {
 		return wp_nonce_url( admin_url( 'admin-post.php?action=nemvo_booking_employee_' . $action . '&id=' . $id ), 'nemvo_booking_employee_' . $action );
 	}
 
+	/**
+	 * The employee named in the request, or a 404 page.
+	 *
+	 * @return array Employee.
+	 */
 	private static function employee_or_die(): array {
 		$employee = Employees::get( isset( $_REQUEST['id'] ) ? absint( $_REQUEST['id'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $employee ) {
@@ -30,7 +55,11 @@ class EmployeesPage {
 		return $employee;
 	}
 
-	/** Booking page titles per employee ID. */
+	/**
+	 * Booking page titles per employee ID.
+	 *
+	 * @return array[] Employee ID => titles.
+	 */
 	private static function usage(): array {
 		$usage = array();
 		foreach ( Pages::published() as $id => $title ) {
@@ -41,6 +70,9 @@ class EmployeesPage {
 		return $usage;
 	}
 
+	/**
+	 * Renders Bookings → Employees: the list, or one employee when edit is set.
+	 */
 	public static function render() {
 		$edit = isset( $_GET['edit'] ) ? Employees::get( absint( $_GET['edit'] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $edit ) {
@@ -89,7 +121,7 @@ class EmployeesPage {
 							<span class="description"><?php echo esc_html( $employee['email'] ); ?></span>
 						</td>
 						<td><?php self::status( $employee ); ?></td>
-						<td><?php echo esc_html( implode( ', ', $usage[ $employee['id'] ] ?? array() ) ?: '–' ); ?></td>
+						<td><?php echo esc_html( Plugin::fallback( implode( ', ', $usage[ $employee['id'] ] ?? array() ), '–' ) ); ?></td>
 						<td class="nb-actions">
 							<a class="button" href="<?php echo esc_url( $edit_url ); ?>"><?php echo Employees::is_connected( $employee ) ? esc_html__( 'Edit', 'nemvo-booking' ) : esc_html__( 'Connect & edit', 'nemvo-booking' ); ?></a>
 							<a class="button-link-delete" data-confirm href="<?php echo esc_url( self::action_url( 'delete', $employee['id'] ) ); ?>"><?php esc_html_e( 'Delete', 'nemvo-booking' ); ?></a>
@@ -102,6 +134,11 @@ class EmployeesPage {
 		<?php
 	}
 
+	/**
+	 * Prints an employee's Google connection status.
+	 *
+	 * @param array $employee Employee.
+	 */
 	private static function status( array $employee ) {
 		if ( ! Employees::is_connected( $employee ) ) {
 			echo '<span class="nb-badge nb-badge--pending">' . esc_html__( 'Not connected', 'nemvo-booking' ) . '</span>';
@@ -114,6 +151,11 @@ class EmployeesPage {
 		echo '<span class="nb-badge nb-badge--confirmed">' . esc_html__( 'Connected', 'nemvo-booking' ) . '</span> <span class="description">' . esc_html( $employee['google_email'] ) . '</span>';
 	}
 
+	/**
+	 * Renders the edit screen of one employee.
+	 *
+	 * @param array $employee Employee.
+	 */
 	private static function render_edit( array $employee ) {
 		$connected = Employees::is_connected( $employee );
 		$link      = '';
@@ -153,8 +195,8 @@ class EmployeesPage {
 							<th scope="row"><?php esc_html_e( 'Photo', 'nemvo-booking' ); ?></th>
 							<td>
 								<div class="nb-photo" data-photo>
-									<img src="<?php echo esc_url( Employees::avatar( $employee ) ); ?>" data-placeholder="<?php echo esc_url( get_avatar_url( $employee['email'], array( 'size' => 112, 'default' => 'mp' ) ) ); ?>" alt="">
-									<input type="hidden" name="photo_id" value="<?php echo esc_attr( $employee['photo_id'] ?: '' ); ?>">
+									<img src="<?php echo esc_url( Employees::avatar( $employee ) ); ?>" data-placeholder="<?php echo esc_url( Employees::placeholder( $employee ) ); ?>" alt="">
+									<input type="hidden" name="photo_id" value="<?php echo esc_attr( $employee['photo_id'] ? $employee['photo_id'] : '' ); ?>">
 									<button type="button" class="button" data-photo-choose><?php esc_html_e( 'Choose photo', 'nemvo-booking' ); ?></button>
 									<button type="button" class="button-link button-link-delete" data-photo-remove <?php echo $employee['photo_id'] ? '' : 'hidden'; ?>><?php esc_html_e( 'Remove', 'nemvo-booking' ); ?></button>
 								</div>
@@ -163,7 +205,7 @@ class EmployeesPage {
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Booking pages', 'nemvo-booking' ); ?></th>
-							<td><?php echo esc_html( implode( ', ', $usage ) ?: __( 'Not used on any booking page yet. Add the employee under "Hosts" when editing a booking page.', 'nemvo-booking' ) ); ?></td>
+							<td><?php echo esc_html( Plugin::fallback( implode( ', ', $usage ), __( 'Not used on any booking page yet. Add the employee under "Hosts" when editing a booking page.', 'nemvo-booking' ) ) ); ?></td>
 						</tr>
 					</table>
 				</div>
@@ -195,7 +237,7 @@ class EmployeesPage {
 							</thead>
 							<tbody>
 							<?php
-							$target = $employee['target_calendar'] ?: 'primary';
+							$target = $employee['target_calendar'] ? $employee['target_calendar'] : 'primary';
 							foreach ( $employee['calendars'] as $cal ) :
 								$is_target = $target === $cal['id'] || ( 'primary' === $target && $cal['primary'] );
 								$writable  = in_array( $cal['role'], array( 'owner', 'writer' ), true );
@@ -203,7 +245,11 @@ class EmployeesPage {
 								<tr>
 									<td><?php echo esc_html( $cal['summary'] ); ?><?php echo $cal['primary'] ? ' <span class="description">(' . esc_html__( 'primary', 'nemvo-booking' ) . ')</span>' : ''; ?></td>
 									<td><input type="checkbox" name="busy_calendars[]" value="<?php echo esc_attr( $cal['id'] ); ?>" <?php checked( in_array( $cal['id'], Employees::busy_calendars( $employee ), true ) || ( $cal['primary'] && in_array( 'primary', Employees::busy_calendars( $employee ), true ) ) ); ?>></td>
-									<td><?php if ( $writable ) : ?><input type="radio" name="target_calendar" value="<?php echo esc_attr( $cal['primary'] ? '' : $cal['id'] ); ?>" <?php checked( $is_target ); ?>><?php endif; ?></td>
+									<td>
+									<?php
+									if ( $writable ) :
+										?>
+										<input type="radio" name="target_calendar" value="<?php echo esc_attr( $cal['primary'] ? '' : $cal['id'] ); ?>" <?php checked( $is_target ); ?>><?php endif; ?></td>
 								</tr>
 							<?php endforeach; ?>
 							</tbody>
@@ -243,6 +289,9 @@ class EmployeesPage {
 		<?php
 	}
 
+	/**
+	 * Admin-post handler: adds or saves an employee.
+	 */
 	public static function handle_save() {
 		Admin::check( 'nemvo_booking_employee_save' );
 		// phpcs:disable WordPress.Security.NonceVerification -- checked above.
@@ -251,13 +300,27 @@ class EmployeesPage {
 		$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 
 		if ( '' === $name || ! is_email( $email ) ) {
-			Admin::redirect( self::PAGE, array_filter( array( 'edit' => $id, 'nb_error' => rawurlencode( __( 'Please enter a name and a valid email address.', 'nemvo-booking' ) ) ) ) );
+			Admin::redirect(
+				self::PAGE,
+				array_filter(
+					array(
+						'edit'                => $id,
+						'nemvo_booking_error' => rawurlencode( __( 'Please enter a name and a valid email address.', 'nemvo-booking' ) ),
+					)
+				)
+			);
 		}
 
 		if ( ! $id ) {
 			$id = Employees::create( $name, $email );
 			Log::info( 'employee.created', sprintf( 'Employee %1$s (%2$s) was added.', $name, $email ), array( 'employee_id' => $id ) );
-			Admin::redirect( self::PAGE, array( 'edit' => $id, 'nb_notice' => 'created' ) );
+			Admin::redirect(
+				self::PAGE,
+				array(
+					'edit'                 => $id,
+					'nemvo_booking_notice' => 'created',
+				)
+			);
 		}
 
 		$employee = self::employee_or_die();
@@ -270,10 +333,10 @@ class EmployeesPage {
 			$data['photo_id'] = $photo && wp_attachment_is_image( $photo ) ? $photo : 0;
 		}
 		if ( Employees::is_connected( $employee ) ) {
-			$known                  = wp_list_pluck( $employee['calendars'], 'id' );
-			$busy                   = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST['busy_calendars'] ?? array() ) ) );
-			$data['busy_calendars'] = array_values( array_intersect( $busy, $known ) );
-			$target                 = sanitize_text_field( wp_unslash( $_POST['target_calendar'] ?? '' ) );
+			$known                   = wp_list_pluck( $employee['calendars'], 'id' );
+			$busy                    = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST['busy_calendars'] ?? array() ) ) );
+			$data['busy_calendars']  = array_values( array_intersect( $busy, $known ) );
+			$target                  = sanitize_text_field( wp_unslash( $_POST['target_calendar'] ?? '' ) );
 			$data['target_calendar'] = in_array( $target, $known, true ) ? $target : '';
 			if ( ! $data['busy_calendars'] ) {
 				$data['busy_calendars'] = array( 'primary' );
@@ -281,9 +344,18 @@ class EmployeesPage {
 		}
 		// phpcs:enable
 		Employees::update( $id, $data );
-		Admin::redirect( self::PAGE, array( 'edit' => $id, 'nb_notice' => 'saved' ) );
+		Admin::redirect(
+			self::PAGE,
+			array(
+				'edit'                 => $id,
+				'nemvo_booking_notice' => 'saved',
+			)
+		);
 	}
 
+	/**
+	 * Admin-post handler: disconnects and deletes an employee.
+	 */
 	public static function handle_delete() {
 		Admin::check( 'nemvo_booking_employee_delete' );
 		$employee = self::employee_or_die();
@@ -292,9 +364,12 @@ class EmployeesPage {
 		}
 		Employees::delete( $employee['id'] );
 		Log::info( 'employee.deleted', sprintf( 'Employee %1$s (%2$s) was deleted.', $employee['name'], $employee['email'] ), array( 'employee_id' => $employee['id'] ) );
-		Admin::redirect( self::PAGE, array( 'nb_notice' => 'deleted' ) );
+		Admin::redirect( self::PAGE, array( 'nemvo_booking_notice' => 'deleted' ) );
 	}
 
+	/**
+	 * Admin-post handler: sends the admin to Google to connect the employee's calendar.
+	 */
 	public static function handle_connect() {
 		Admin::check( 'nemvo_booking_employee_connect' );
 		$employee = self::employee_or_die();
@@ -302,27 +377,48 @@ class EmployeesPage {
 		exit;
 	}
 
+	/**
+	 * Admin-post handler: disconnects the employee's Google Calendar.
+	 */
 	public static function handle_disconnect() {
 		Admin::check( 'nemvo_booking_employee_disconnect' );
 		$employee = self::employee_or_die();
 		Employees::disconnect( $employee );
 		Log::info( 'google.disconnected', sprintf( 'Google Calendar disconnected for %s.', $employee['name'] ), array( 'employee_id' => $employee['id'] ) );
-		Admin::redirect( self::PAGE, array( 'edit' => $employee['id'], 'nb_notice' => 'disconnected' ) );
+		Admin::redirect(
+			self::PAGE,
+			array(
+				'edit'                 => $employee['id'],
+				'nemvo_booking_notice' => 'disconnected',
+			)
+		);
 	}
 
+	/**
+	 * Admin-post handler: creates a new connect link for the employee.
+	 */
 	public static function handle_link() {
 		Admin::check( 'nemvo_booking_employee_link' );
 		$employee = self::employee_or_die();
 		Employees::connect_link( $employee );
 		Log::info( 'employee.connect_link', sprintf( 'A Google connect link was created for %s.', $employee['name'] ), array( 'employee_id' => $employee['id'] ) );
-		Admin::redirect( self::PAGE, array( 'edit' => $employee['id'], 'nb_notice' => 'link' ) );
+		Admin::redirect(
+			self::PAGE,
+			array(
+				'edit'                 => $employee['id'],
+				'nemvo_booking_notice' => 'link',
+			)
+		);
 	}
 
+	/**
+	 * Admin-post handler: reads the employee's calendar list from Google again.
+	 */
 	public static function handle_refresh() {
 		Admin::check( 'nemvo_booking_employee_refresh' );
 		$employee = self::employee_or_die();
 		$result   = Employees::refresh_calendars( $employee );
-		$args     = is_wp_error( $result ) ? array( 'nb_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nb_notice' => 'refreshed' );
+		$args     = is_wp_error( $result ) ? array( 'nemvo_booking_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nemvo_booking_notice' => 'refreshed' );
 		Admin::redirect( self::PAGE, array( 'edit' => $employee['id'] ) + $args );
 	}
 }

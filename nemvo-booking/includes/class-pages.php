@@ -1,4 +1,10 @@
 <?php
+/**
+ * Booking pages.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
@@ -8,18 +14,31 @@ defined( 'ABSPATH' ) || exit;
  */
 class Pages {
 
-	const CPT  = 'nb_booking_page';
+	/** Post type of booking pages. */
+	const CPT = 'nemvo_booking_page';
+
+	/** Post type used up to 1.2.1; Install::maybe_upgrade() moves existing pages to CPT. */
+	const LEGACY_CPT = 'nb_booking_page';
+
+	/** Post meta key holding a booking page's settings. */
 	const META = '_nemvo_booking';
 
 	const FIELD_TYPES = array( 'text', 'email', 'tel', 'url', 'textarea', 'select', 'checkbox' );
 	const DAYS        = array( 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' );
 
+	/**
+	 * Registers the post type on init.
+	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
 	}
 
+	/**
+	 * Registers the booking page post type. It is private (no public URLs) and managed under
+	 * Bookings → Booking pages with the plugin's capability.
+	 */
 	public static function register() {
-		$cap = 'manage_options';
+		$cap = Plugin::capability();
 		register_post_type(
 			self::CPT,
 			array(
@@ -56,17 +75,69 @@ class Pages {
 		);
 	}
 
+	/**
+	 * Form fields of a new booking page.
+	 *
+	 * @return array[] Fields with key, label, type, required, placeholder and options.
+	 */
 	public static function default_fields(): array {
 		return array(
-			array( 'key' => 'name', 'label' => __( 'Name', 'nemvo-booking' ), 'type' => 'text', 'required' => 1, 'placeholder' => '', 'options' => '' ),
-			array( 'key' => 'email', 'label' => __( 'Email', 'nemvo-booking' ), 'type' => 'email', 'required' => 1, 'placeholder' => '', 'options' => '' ),
-			array( 'key' => 'company', 'label' => __( 'Company', 'nemvo-booking' ), 'type' => 'text', 'required' => 0, 'placeholder' => '', 'options' => '' ),
-			array( 'key' => 'title', 'label' => __( 'Job title', 'nemvo-booking' ), 'type' => 'text', 'required' => 0, 'placeholder' => '', 'options' => '' ),
-			array( 'key' => 'phone', 'label' => __( 'Phone', 'nemvo-booking' ), 'type' => 'tel', 'required' => 0, 'placeholder' => '', 'options' => '' ),
-			array( 'key' => 'description', 'label' => __( 'What would you like to discuss?', 'nemvo-booking' ), 'type' => 'textarea', 'required' => 0, 'placeholder' => __( 'Share anything that will help us prepare for the meeting.', 'nemvo-booking' ), 'options' => '' ),
+			array(
+				'key'         => 'name',
+				'label'       => __( 'Name', 'nemvo-booking' ),
+				'type'        => 'text',
+				'required'    => 1,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			array(
+				'key'         => 'email',
+				'label'       => __( 'Email', 'nemvo-booking' ),
+				'type'        => 'email',
+				'required'    => 1,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			array(
+				'key'         => 'company',
+				'label'       => __( 'Company', 'nemvo-booking' ),
+				'type'        => 'text',
+				'required'    => 0,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			array(
+				'key'         => 'title',
+				'label'       => __( 'Job title', 'nemvo-booking' ),
+				'type'        => 'text',
+				'required'    => 0,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			array(
+				'key'         => 'phone',
+				'label'       => __( 'Phone', 'nemvo-booking' ),
+				'type'        => 'tel',
+				'required'    => 0,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			array(
+				'key'         => 'description',
+				'label'       => __( 'What would you like to discuss?', 'nemvo-booking' ),
+				'type'        => 'textarea',
+				'required'    => 0,
+				'placeholder' => __( 'Share anything that will help us prepare for the meeting.', 'nemvo-booking' ),
+				'options'     => '',
+			),
 		);
 	}
 
+	/**
+	 * Default configuration of a booking page.
+	 *
+	 * @return array
+	 */
 	public static function defaults(): array {
 		return array(
 			'description'      => '',
@@ -101,6 +172,12 @@ class Pages {
 		);
 	}
 
+	/**
+	 * A booking page's configuration: saved settings over the defaults, plus its ID and title.
+	 *
+	 * @param int $post_id Booking page ID.
+	 * @return array
+	 */
 	public static function config( int $post_id ): array {
 		$saved = get_post_meta( $post_id, self::META, true );
 		$cfg   = wp_parse_args( is_array( $saved ) ? $saved : array(), self::defaults() );
@@ -113,7 +190,12 @@ class Pages {
 		return $cfg;
 	}
 
-	/** Resolves an ID or slug to a published booking page ID. */
+	/**
+	 * Resolves an ID or slug to a published booking page ID.
+	 *
+	 * @param int|string $id_or_slug Post ID or slug.
+	 * @return int Post ID, or 0 when there is no such published booking page.
+	 */
 	public static function find( $id_or_slug ): int {
 		if ( is_numeric( $id_or_slug ) ) {
 			$post = get_post( (int) $id_or_slug );
@@ -123,10 +205,16 @@ class Pages {
 		return ( $post && self::CPT === $post->post_type && 'publish' === $post->post_status ) ? (int) $post->ID : 0;
 	}
 
-	/** @return \WP_Post[] Published posts/pages that show this booking page (block or shortcode). */
+	/**
+	 * Published posts and pages that show this booking page (block or shortcode).
+	 *
+	 * @param int $id Booking page ID.
+	 * @return \WP_Post[]
+	 */
 	public static function embedded_on( int $id ): array {
 		global $wpdb;
-		$ids = $wpdb->get_col(
+		// Searches post content for the block or shortcode; no WordPress API does a LIKE search on content.
+		$ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type NOT IN ('revision', %s) AND (post_content LIKE %s OR post_content LIKE %s OR post_content LIKE %s)",
 				self::CPT,
@@ -138,6 +226,11 @@ class Pages {
 		return array_filter( array_map( 'get_post', $ids ) );
 	}
 
+	/**
+	 * Published booking pages by title.
+	 *
+	 * @return string[] Post ID => title.
+	 */
 	public static function published(): array {
 		$posts = get_posts(
 			array(
@@ -148,13 +241,19 @@ class Pages {
 				'order'       => 'ASC',
 			)
 		);
-		$out = array();
+		$out   = array();
 		foreach ( $posts as $post ) {
 			$out[ $post->ID ] = $post->post_title;
 		}
 		return $out;
 	}
 
+	/**
+	 * Sanitizes the booking page form from the editor.
+	 *
+	 * @param array $in Submitted values.
+	 * @return array Configuration to store.
+	 */
 	public static function sanitize( array $in ): array {
 		$d   = self::defaults();
 		$cfg = array();
@@ -171,7 +270,7 @@ class Pages {
 
 		$durations = array_values( array_unique( array_filter( array_map( 'absint', (array) ( $in['durations'] ?? array() ) ) ) ) );
 		sort( $durations );
-		$cfg['durations']        = $durations ?: $d['durations'];
+		$cfg['durations']        = $durations ? $durations : $d['durations'];
 		$default_duration        = absint( $in['default_duration'] ?? 0 );
 		$cfg['default_duration'] = in_array( $default_duration, $cfg['durations'], true ) ? $default_duration : $cfg['durations'][0];
 
@@ -202,19 +301,26 @@ class Pages {
 		$cfg['fields']           = self::sanitize_fields( (array) ( $in['fields'] ?? array() ) );
 		$cfg['allow_guests']     = empty( $in['allow_guests'] ) ? 0 : 1;
 		$cfg['max_guests']       = max( 1, min( 50, absint( $in['max_guests'] ?? $d['max_guests'] ) ) );
-		$cfg['meeting_title']    = sanitize_text_field( $in['meeting_title'] ?? '' ) ?: $d['meeting_title'];
+		$cfg['meeting_title']    = Plugin::fallback( sanitize_text_field( $in['meeting_title'] ?? '' ), $d['meeting_title'] );
 		$cfg['thank_you']        = wp_kses_post( $in['thank_you'] ?? '' );
 		$cfg['redirect_url']     = esc_url_raw( $in['redirect_url'] ?? '' );
 
 		return $cfg;
 	}
 
+	/**
+	 * Sanitizes the form field editor. Keys are unique, "guests" and "website" are reserved, and
+	 * name and email are always present and required.
+	 *
+	 * @param array $fields Submitted fields.
+	 * @return array[] Fields.
+	 */
 	private static function sanitize_fields( array $fields ): array {
 		$out  = array();
 		$seen = array();
 		foreach ( $fields as $f ) {
 			$label = sanitize_text_field( $f['label'] ?? '' );
-			$key   = sanitize_key( $f['key'] ?? '' ) ?: sanitize_key( str_replace( ' ', '_', $label ) );
+			$key   = Plugin::fallback( sanitize_key( $f['key'] ?? '' ), sanitize_key( str_replace( ' ', '_', $label ) ) );
 			if ( '' === $label || '' === $key || isset( $seen[ $key ] ) || in_array( $key, array( 'guests', 'website' ), true ) ) {
 				continue;
 			}
@@ -232,8 +338,22 @@ class Pages {
 
 		// Name and email are always present and required.
 		$core = array(
-			'email' => array( 'key' => 'email', 'label' => __( 'Email', 'nemvo-booking' ), 'type' => 'email', 'required' => 1, 'placeholder' => '', 'options' => '' ),
-			'name'  => array( 'key' => 'name', 'label' => __( 'Name', 'nemvo-booking' ), 'type' => 'text', 'required' => 1, 'placeholder' => '', 'options' => '' ),
+			'email' => array(
+				'key'         => 'email',
+				'label'       => __( 'Email', 'nemvo-booking' ),
+				'type'        => 'email',
+				'required'    => 1,
+				'placeholder' => '',
+				'options'     => '',
+			),
+			'name'  => array(
+				'key'         => 'name',
+				'label'       => __( 'Name', 'nemvo-booking' ),
+				'type'        => 'text',
+				'required'    => 1,
+				'placeholder' => '',
+				'options'     => '',
+			),
 		);
 		foreach ( $core as $key => $field ) {
 			$index = array_search( $key, array_column( $out, 'key' ), true );
@@ -249,6 +369,9 @@ class Pages {
 
 	/**
 	 * Parses "09:00-12:00, 13:00-17:00" into [[540, 720], [780, 1020]] (minutes from midnight).
+	 *
+	 * @param string $value Opening hours of one day.
+	 * @return array[] Sorted ranges.
 	 */
 	public static function parse_ranges( string $value ): array {
 		$ranges = array();
@@ -271,12 +394,22 @@ class Pages {
 		return $ranges;
 	}
 
-	/** Hosts of this page, organizer first. All of them attend every meeting. */
+	/**
+	 * Hosts of this page, organizer first. All of them attend every meeting.
+	 *
+	 * @param array $cfg Booking page configuration.
+	 * @return array[] Employees.
+	 */
 	public static function hosts( array $cfg ): array {
 		return Employees::many( $cfg['employees'] );
 	}
 
-	/** Bookable when Google is set up and every host has connected their calendar. */
+	/**
+	 * Bookable when Google is set up and every host has connected their calendar.
+	 *
+	 * @param array $cfg Booking page configuration.
+	 * @return bool
+	 */
 	public static function is_bookable( array $cfg ): bool {
 		$hosts = self::hosts( $cfg );
 		if ( ! $hosts || ! Google::is_configured() ) {

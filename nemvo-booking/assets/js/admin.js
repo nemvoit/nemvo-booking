@@ -5,7 +5,10 @@
 	$(function () {
 		$('.nb-color').wpColorPicker();
 
-		// Copy-to-clipboard fields.
+		// Copy-to-clipboard fields: select the whole value on focus, copy on click.
+		$(document).on('focus', '.nb-copy input', function () {
+			this.select();
+		});
 		$(document).on('click', '[data-copy]', function () {
 			var $button = $(this);
 			var input = $button.siblings('input')[0];
@@ -83,7 +86,7 @@
 		// Booking page: form field editor.
 		var $fields = $('.nb-fields tbody');
 		$('[data-add-field]').on('click', function () {
-			var html = $('#nb-field-template').html().replace(/__i__/g, 'n' + Date.now());
+			var html = $('#nemvo-booking-field-template').html().replace(/__i__/g, 'n' + Date.now());
 			$fields.append(html);
 			$fields.find('tr:last input:first').trigger('focus');
 		});

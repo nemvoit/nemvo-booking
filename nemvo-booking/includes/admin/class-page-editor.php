@@ -1,4 +1,10 @@
 <?php
+/**
+ * Booking page editor.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
 use NemvoBooking\Bookings;
@@ -12,11 +18,14 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Edit screen for booking pages.
  */
-class PageEditor {
+class Page_Editor {
 
+	/**
+	 * Hooks into the booking page edit screen and list.
+	 */
 	public static function init() {
 		add_action( 'add_meta_boxes_' . Pages::CPT, array( __CLASS__, 'meta_boxes' ) );
-		add_action( 'save_post_' . Pages::CPT, array( __CLASS__, 'save' ), 10, 2 );
+		add_action( 'save_post_' . Pages::CPT, array( __CLASS__, 'save' ) );
 		add_filter( 'manage_' . Pages::CPT . '_posts_columns', array( __CLASS__, 'columns' ) );
 		add_action( 'manage_' . Pages::CPT . '_posts_custom_column', array( __CLASS__, 'column' ), 10, 2 );
 		add_filter( 'enter_title_here', array( __CLASS__, 'title_placeholder' ), 10, 2 );
@@ -24,15 +33,33 @@ class PageEditor {
 		add_filter( 'post_updated_messages', array( __CLASS__, 'messages' ) );
 	}
 
+	/**
+	 * Placeholder of the title field.
+	 *
+	 * @param string   $text Default placeholder.
+	 * @param \WP_Post $post Booking page.
+	 * @return string
+	 */
 	public static function title_placeholder( $text, $post ) {
 		return Pages::CPT === $post->post_type ? __( 'e.g. 30 minute intro call', 'nemvo-booking' ) : $text;
 	}
 
+	/**
+	 * Messages after saving a booking page.
+	 *
+	 * @param array $messages Messages per post type.
+	 * @return array
+	 */
 	public static function messages( $messages ) {
 		$messages[ Pages::CPT ] = array_fill( 0, 11, __( 'Booking page saved.', 'nemvo-booking' ) );
 		return $messages;
 	}
 
+	/**
+	 * Help below the title, and a warning when the page can't be booked.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function after_title( $post ) {
 		if ( Pages::CPT !== $post->post_type ) {
 			return;
@@ -44,19 +71,33 @@ class PageEditor {
 		}
 	}
 
-	public static function meta_boxes( $post ) {
-		add_meta_box( 'nb-hosts', __( 'Hosts', 'nemvo-booking' ), array( __CLASS__, 'box_hosts' ), null, 'normal', 'high' );
-		add_meta_box( 'nb-scheduling', __( 'Meeting length and booking window', 'nemvo-booking' ), array( __CLASS__, 'box_scheduling' ), null, 'normal', 'high' );
-		add_meta_box( 'nb-availability', __( 'Weekly opening hours', 'nemvo-booking' ), array( __CLASS__, 'box_availability' ), null, 'normal', 'high' );
-		add_meta_box( 'nb-form', __( 'Booking form', 'nemvo-booking' ), array( __CLASS__, 'box_form' ), null, 'normal', 'default' );
-		add_meta_box( 'nb-after', __( 'After booking', 'nemvo-booking' ), array( __CLASS__, 'box_after' ), null, 'normal', 'default' );
-		add_meta_box( 'nb-embed', __( 'Insert on a page', 'nemvo-booking' ), array( __CLASS__, 'box_embed' ), null, 'side', 'high' );
+	/**
+	 * Adds the booking page's settings boxes.
+	 */
+	public static function meta_boxes() {
+		add_meta_box( 'nemvo-booking-hosts', __( 'Hosts', 'nemvo-booking' ), array( __CLASS__, 'box_hosts' ), null, 'normal', 'high' );
+		add_meta_box( 'nemvo-booking-scheduling', __( 'Meeting length and booking window', 'nemvo-booking' ), array( __CLASS__, 'box_scheduling' ), null, 'normal', 'high' );
+		add_meta_box( 'nemvo-booking-availability', __( 'Weekly opening hours', 'nemvo-booking' ), array( __CLASS__, 'box_availability' ), null, 'normal', 'high' );
+		add_meta_box( 'nemvo-booking-form', __( 'Booking form', 'nemvo-booking' ), array( __CLASS__, 'box_form' ), null, 'normal', 'default' );
+		add_meta_box( 'nemvo-booking-after', __( 'After booking', 'nemvo-booking' ), array( __CLASS__, 'box_after' ), null, 'normal', 'default' );
+		add_meta_box( 'nemvo-booking-embed', __( 'Insert on a page', 'nemvo-booking' ), array( __CLASS__, 'box_embed' ), null, 'side', 'high' );
 	}
 
+	/**
+	 * The booking page's configuration.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 * @return array
+	 */
 	private static function cfg( $post ): array {
 		return Pages::config( $post->ID );
 	}
 
+	/**
+	 * Hosts box.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_hosts( $post ) {
 		$cfg       = self::cfg( $post );
 		$employees = Employees::all();
@@ -82,7 +123,7 @@ class PageEditor {
 					<tr>
 						<td>
 							<label>
-								<input type="checkbox" name="nb[employees][]" value="<?php echo esc_attr( $employee['id'] ); ?>" <?php checked( in_array( $employee['id'], $cfg['employees'], true ) ); ?>>
+								<input type="checkbox" name="nemvo_booking[employees][]" value="<?php echo esc_attr( $employee['id'] ); ?>" <?php checked( in_array( $employee['id'], $cfg['employees'], true ) ); ?>>
 								<img class="nb-avatar" src="<?php echo esc_url( Employees::avatar( $employee ) ); ?>" alt="">
 								<?php echo esc_html( $employee['name'] ); ?>
 							</label>
@@ -90,7 +131,7 @@ class PageEditor {
 								<span class="nb-badge nb-badge--pending"><?php esc_html_e( 'Google not connected', 'nemvo-booking' ); ?></span>
 							<?php endif; ?>
 						</td>
-						<td><input type="radio" name="nb[organizer]" value="<?php echo esc_attr( $employee['id'] ); ?>" <?php checked( $organizer, $employee['id'] ); ?> aria-label="<?php echo esc_attr( sprintf( /* translators: %s: employee name */ __( '%s organizes', 'nemvo-booking' ), $employee['name'] ) ); ?>"></td>
+						<td><input type="radio" name="nemvo_booking[organizer]" value="<?php echo esc_attr( $employee['id'] ); ?>" <?php checked( $organizer, $employee['id'] ); ?> aria-label="<?php echo esc_attr( sprintf( /* translators: %s: employee name */ __( '%s organizes', 'nemvo-booking' ), $employee['name'] ) ); ?>"></td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
@@ -100,6 +141,11 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * Meeting length and booking window box.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_scheduling( $post ) {
 		$cfg = self::cfg( $post );
 		?>
@@ -108,7 +154,7 @@ class PageEditor {
 				<th scope="row"><?php esc_html_e( 'Meeting lengths', 'nemvo-booking' ); ?></th>
 				<td>
 					<?php foreach ( array( 15, 20, 30, 45, 60, 90, 120 ) as $minutes ) : ?>
-						<label class="nb-chip"><input type="checkbox" name="nb[durations][]" value="<?php echo esc_attr( $minutes ); ?>" <?php checked( in_array( $minutes, $cfg['durations'], true ) ); ?>> <?php echo esc_html( sprintf( /* translators: %d: minutes */ __( '%d min', 'nemvo-booking' ), $minutes ) ); ?></label>
+						<label class="nb-chip"><input type="checkbox" name="nemvo_booking[durations][]" value="<?php echo esc_attr( $minutes ); ?>" <?php checked( in_array( $minutes, $cfg['durations'], true ) ); ?>> <?php echo esc_html( sprintf( /* translators: %d: minutes */ __( '%d min', 'nemvo-booking' ), $minutes ) ); ?></label>
 					<?php endforeach; ?>
 					<p class="description"><?php esc_html_e( 'Select one or more. With several, the visitor chooses the length.', 'nemvo-booking' ); ?></p>
 				</td>
@@ -116,7 +162,7 @@ class PageEditor {
 			<tr>
 				<th scope="row"><label for="nb-default-duration"><?php esc_html_e( 'Preselected length', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<select id="nb-default-duration" name="nb[default_duration]">
+					<select id="nb-default-duration" name="nemvo_booking[default_duration]">
 						<?php foreach ( array( 15, 20, 30, 45, 60, 90, 120 ) as $minutes ) : ?>
 							<option value="<?php echo esc_attr( $minutes ); ?>" <?php selected( $cfg['default_duration'], $minutes ); ?>><?php echo esc_html( sprintf( /* translators: %d: minutes */ __( '%d min', 'nemvo-booking' ), $minutes ) ); ?></option>
 						<?php endforeach; ?>
@@ -126,7 +172,7 @@ class PageEditor {
 			<tr>
 				<th scope="row"><label for="nb-interval"><?php esc_html_e( 'Start times every', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<select id="nb-interval" name="nb[interval]">
+					<select id="nb-interval" name="nemvo_booking[interval]">
 						<?php foreach ( array( 10, 15, 20, 30, 45, 60, 90, 120 ) as $minutes ) : ?>
 							<option value="<?php echo esc_attr( $minutes ); ?>" <?php selected( $cfg['interval'], $minutes ); ?>><?php echo esc_html( sprintf( /* translators: %d: minutes */ __( '%d min', 'nemvo-booking' ), $minutes ) ); ?></option>
 						<?php endforeach; ?>
@@ -137,22 +183,22 @@ class PageEditor {
 			<tr>
 				<th scope="row"><label for="nb-min-notice"><?php esc_html_e( 'Minimum notice', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<input type="number" id="nb-min-notice" class="small-text" min="0" name="nb[min_notice]" value="<?php echo esc_attr( $cfg['min_notice'] ); ?>"> <?php esc_html_e( 'hours', 'nemvo-booking' ); ?>
+					<input type="number" id="nb-min-notice" class="small-text" min="0" name="nemvo_booking[min_notice]" value="<?php echo esc_attr( $cfg['min_notice'] ); ?>"> <?php esc_html_e( 'hours', 'nemvo-booking' ); ?>
 					<p class="description"><?php esc_html_e( 'How far in advance a meeting must be booked. 24 means nothing can be booked within the next 24 hours.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="nb-max-days"><?php esc_html_e( 'Book up to', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<input type="number" id="nb-max-days" class="small-text" min="1" max="730" name="nb[max_days]" value="<?php echo esc_attr( $cfg['max_days'] ); ?>"> <?php esc_html_e( 'days into the future', 'nemvo-booking' ); ?>
+					<input type="number" id="nb-max-days" class="small-text" min="1" max="730" name="nemvo_booking[max_days]" value="<?php echo esc_attr( $cfg['max_days'] ); ?>"> <?php esc_html_e( 'days into the future', 'nemvo-booking' ); ?>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Buffer time', 'nemvo-booking' ); ?></th>
 				<td>
-					<label><input type="number" class="small-text" min="0" max="240" name="nb[buffer_before]" value="<?php echo esc_attr( $cfg['buffer_before'] ); ?>"> <?php esc_html_e( 'min before', 'nemvo-booking' ); ?></label>
+					<label><input type="number" class="small-text" min="0" max="240" name="nemvo_booking[buffer_before]" value="<?php echo esc_attr( $cfg['buffer_before'] ); ?>"> <?php esc_html_e( 'min before', 'nemvo-booking' ); ?></label>
 					&nbsp;
-					<label><input type="number" class="small-text" min="0" max="240" name="nb[buffer_after]" value="<?php echo esc_attr( $cfg['buffer_after'] ); ?>"> <?php esc_html_e( 'min after', 'nemvo-booking' ); ?></label>
+					<label><input type="number" class="small-text" min="0" max="240" name="nemvo_booking[buffer_after]" value="<?php echo esc_attr( $cfg['buffer_after'] ); ?>"> <?php esc_html_e( 'min after', 'nemvo-booking' ); ?></label>
 					<p class="description"><?php esc_html_e( 'Free time required around the meeting, so hosts aren\'t booked back-to-back with other events.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
@@ -160,6 +206,11 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * Weekly opening hours box.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_availability( $post ) {
 		$cfg  = self::cfg( $post );
 		$days = array(
@@ -177,20 +228,20 @@ class PageEditor {
 			<?php foreach ( $days as $key => $label ) : ?>
 				<tr>
 					<th scope="row"><label for="nb-day-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
-					<td><input type="text" id="nb-day-<?php echo esc_attr( $key ); ?>" class="regular-text code" name="nb[availability][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $cfg['availability'][ $key ] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Closed', 'nemvo-booking' ); ?>"></td>
+					<td><input type="text" id="nb-day-<?php echo esc_attr( $key ); ?>" class="regular-text code" name="nemvo_booking[availability][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $cfg['availability'][ $key ] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Closed', 'nemvo-booking' ); ?>"></td>
 				</tr>
 			<?php endforeach; ?>
 			<tr>
 				<th scope="row"><label for="nb-timezone"><?php esc_html_e( 'Time zone', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<select id="nb-timezone" name="nb[timezone]"><?php echo wp_timezone_choice( $cfg['timezone'], get_user_locale() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></select>
+					<select id="nb-timezone" name="nemvo_booking[timezone]"><?php echo wp_timezone_choice( $cfg['timezone'], get_user_locale() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></select>
 					<p class="description"><?php esc_html_e( 'The opening hours above are in this time zone. Visitors see times converted to their own time zone.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Public holidays', 'nemvo-booking' ); ?></th>
 				<td>
-					<label><input type="checkbox" name="nb[exclude_holidays]" value="1" <?php checked( $cfg['exclude_holidays'] ); ?>> <?php esc_html_e( 'Closed on public holidays', 'nemvo-booking' ); ?></label>
+					<label><input type="checkbox" name="nemvo_booking[exclude_holidays]" value="1" <?php checked( $cfg['exclude_holidays'] ); ?>> <?php esc_html_e( 'Closed on public holidays', 'nemvo-booking' ); ?></label>
 					<p class="description">
 						<?php
 						printf(
@@ -206,6 +257,11 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * Booking form box: description, host photos, questions and guests.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_form( $post ) {
 		$cfg   = self::cfg( $post );
 		$types = array(
@@ -222,14 +278,14 @@ class PageEditor {
 			<tr>
 				<th scope="row"><label for="nb-description"><?php esc_html_e( 'Description', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<textarea id="nb-description" class="large-text" rows="4" name="nb[description]" placeholder="<?php esc_attr_e( 'A short call to get to know each other and see how we can help.', 'nemvo-booking' ); ?>"><?php echo esc_textarea( $cfg['description'] ); ?></textarea>
+					<textarea id="nb-description" class="large-text" rows="4" name="nemvo_booking[description]" placeholder="<?php esc_attr_e( 'A short call to get to know each other and see how we can help.', 'nemvo-booking' ); ?>"><?php echo esc_textarea( $cfg['description'] ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'Shown next to the calendar. Basic HTML allowed.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Host photos', 'nemvo-booking' ); ?></th>
 				<td>
-					<label><input type="checkbox" name="nb[show_photos]" value="1" <?php checked( $cfg['show_photos'] ); ?>> <?php esc_html_e( 'Show the hosts\' photos above the title', 'nemvo-booking' ); ?></label>
+					<label><input type="checkbox" name="nemvo_booking[show_photos]" value="1" <?php checked( $cfg['show_photos'] ); ?>> <?php esc_html_e( 'Show the hosts\' photos above the title', 'nemvo-booking' ); ?></label>
 					<p class="description">
 						<?php
 						printf(
@@ -263,7 +319,7 @@ class PageEditor {
 			</tbody>
 		</table>
 		<p><button type="button" class="button" data-add-field><?php esc_html_e( '+ Add question', 'nemvo-booking' ); ?></button></p>
-		<template id="nb-field-template">
+		<template id="nemvo-booking-field-template">
 			<?php
 			self::field_row(
 				'__i__',
@@ -284,9 +340,9 @@ class PageEditor {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Guests', 'nemvo-booking' ); ?></th>
 				<td>
-					<label><input type="checkbox" name="nb[allow_guests]" value="1" <?php checked( $cfg['allow_guests'] ); ?>> <?php esc_html_e( 'Let visitors invite colleagues by email', 'nemvo-booking' ); ?></label>
+					<label><input type="checkbox" name="nemvo_booking[allow_guests]" value="1" <?php checked( $cfg['allow_guests'] ); ?>> <?php esc_html_e( 'Let visitors invite colleagues by email', 'nemvo-booking' ); ?></label>
 					&nbsp;
-					<label><?php esc_html_e( 'Max', 'nemvo-booking' ); ?> <input type="number" class="small-text" min="1" max="50" name="nb[max_guests]" value="<?php echo esc_attr( $cfg['max_guests'] ); ?>"></label>
+					<label><?php esc_html_e( 'Max', 'nemvo-booking' ); ?> <input type="number" class="small-text" min="1" max="50" name="nemvo_booking[max_guests]" value="<?php echo esc_attr( $cfg['max_guests'] ); ?>"></label>
 					<p class="description"><?php esc_html_e( 'Guests are added to the meeting and receive the calendar invitation.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
@@ -294,9 +350,16 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * One row of the question editor.
+	 *
+	 * @param string $i      Row index (__i__ in the template).
+	 * @param array  $field  Field.
+	 * @param array  $types  Field type => label.
+	 */
 	private static function field_row( string $i, array $field, array $types ) {
 		$core = in_array( $field['key'], array( 'name', 'email' ), true );
-		$name = 'nb[fields][' . $i . ']';
+		$name = 'nemvo_booking[fields][' . $i . ']';
 		?>
 		<tr class="nb-field-row<?php echo $core ? ' is-core' : ''; ?>">
 			<td><input type="text" class="widefat" name="<?php echo esc_attr( $name ); ?>[label]" value="<?php echo esc_attr( $field['label'] ); ?>" placeholder="<?php esc_attr_e( 'Question', 'nemvo-booking' ); ?>"></td>
@@ -342,6 +405,11 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * After booking box: thank-you message, rescheduling, redirect and event title.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_after( $post ) {
 		$cfg = self::cfg( $post );
 		?>
@@ -354,7 +422,7 @@ class PageEditor {
 						$cfg['thank_you'],
 						'nb-thank-you',
 						array(
-							'textarea_name' => 'nb[thank_you]',
+							'textarea_name' => 'nemvo_booking[thank_you]',
 							'textarea_rows' => 6,
 							'media_buttons' => false,
 							'teeny'         => true,
@@ -367,21 +435,21 @@ class PageEditor {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Changes', 'nemvo-booking' ); ?></th>
 				<td>
-					<label><input type="checkbox" name="nb[allow_reschedule]" value="1" <?php checked( $cfg['allow_reschedule'] ); ?>> <?php esc_html_e( 'Let the booker pick a new time', 'nemvo-booking' ); ?></label>
+					<label><input type="checkbox" name="nemvo_booking[allow_reschedule]" value="1" <?php checked( $cfg['allow_reschedule'] ); ?>> <?php esc_html_e( 'Let the booker pick a new time', 'nemvo-booking' ); ?></label>
 					<p class="description"><?php esc_html_e( 'Adds a "pick a new time" link to the confirmation email ({reschedule_link}). The meeting keeps its Google Meet link and everyone receives the updated time. Cancelling is always possible until the meeting starts.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="nb-redirect"><?php esc_html_e( 'Redirect instead', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<input type="url" id="nb-redirect" class="regular-text" name="nb[redirect_url]" value="<?php echo esc_attr( $cfg['redirect_url'] ); ?>" placeholder="https://">
+					<input type="url" id="nb-redirect" class="regular-text" name="nemvo_booking[redirect_url]" value="<?php echo esc_attr( $cfg['redirect_url'] ); ?>" placeholder="https://">
 					<p class="description"><?php esc_html_e( 'Optional. Send the visitor to this page after booking instead of showing the message (useful for conversion tracking).', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="nb-meeting-title"><?php esc_html_e( 'Calendar event title', 'nemvo-booking' ); ?></label></th>
 				<td>
-					<input type="text" id="nb-meeting-title" class="regular-text" name="nb[meeting_title]" value="<?php echo esc_attr( $cfg['meeting_title'] ); ?>">
+					<input type="text" id="nb-meeting-title" class="regular-text" name="nemvo_booking[meeting_title]" value="<?php echo esc_attr( $cfg['meeting_title'] ); ?>">
 					<p class="description"><?php esc_html_e( 'Title of the event in everyone\'s calendar. Placeholders: {page_title}, {name}, {company} and other field keys.', 'nemvo-booking' ); ?></p>
 				</td>
 			</tr>
@@ -401,6 +469,11 @@ class PageEditor {
 		<?php
 	}
 
+	/**
+	 * Insert on a page box: block and shortcode instructions and where the page is shown.
+	 *
+	 * @param \WP_Post $post Booking page.
+	 */
 	public static function box_embed( $post ) {
 		$shortcode = '[nemvo_booking id="' . (int) $post->ID . '"]';
 		if ( 'publish' !== $post->post_status ) {
@@ -414,7 +487,7 @@ class PageEditor {
 			<li>
 				<?php
 				/* translators: %s: booking page title */
-				printf( esc_html__( 'Pick "%s" in the block.', 'nemvo-booking' ), esc_html( get_the_title( $post ) ?: __( '(this booking page)', 'nemvo-booking' ) ) );
+				printf( esc_html__( 'Pick "%s" in the block.', 'nemvo-booking' ), esc_html( Plugin::fallback( get_the_title( $post ), __( '(this booking page)', 'nemvo-booking' ) ) ) );
 				?>
 			</li>
 			<li><?php esc_html_e( 'Optional: choose "Wide width" in the block toolbar to give the calendar more room. Then update the page.', 'nemvo-booking' ); ?></li>
@@ -445,7 +518,7 @@ class PageEditor {
 			<p><strong><?php esc_html_e( 'Shown on', 'nemvo-booking' ); ?></strong></p>
 			<ul class="nb-steps">
 				<?php foreach ( $used_on as $page ) : ?>
-					<li><a href="<?php echo esc_url( get_permalink( $page ) ); ?>" target="_blank"><?php echo esc_html( get_the_title( $page ) ?: '#' . $page->ID ); ?></a> · <a href="<?php echo esc_url( get_edit_post_link( $page ) ); ?>"><?php esc_html_e( 'Edit', 'nemvo-booking' ); ?></a></li>
+					<li><a href="<?php echo esc_url( get_permalink( $page ) ); ?>" target="_blank"><?php echo esc_html( Plugin::fallback( get_the_title( $page ), '#' . $page->ID ) ); ?></a> · <a href="<?php echo esc_url( get_edit_post_link( $page ) ); ?>"><?php esc_html_e( 'Edit', 'nemvo-booking' ); ?></a></li>
 				<?php endforeach; ?>
 			</ul>
 		<?php elseif ( 'publish' === $post->post_status ) : ?>
@@ -454,43 +527,60 @@ class PageEditor {
 		<?php
 	}
 
-	public static function save( $post_id, $post ) {
+	/**
+	 * Saves the booking page settings (save_post).
+	 *
+	 * @param int $post_id Booking page ID.
+	 */
+	public static function save( $post_id ) {
 		if ( ! isset( $_POST['nemvo_booking_page_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nemvo_booking_page_nonce'] ) ), 'nemvo_booking_page' ) ) {
 			return;
 		}
-		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'manage_options' ) ) {
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( Plugin::capability() ) ) {
 			return;
 		}
-		$input = isset( $_POST['nb'] ) && is_array( $_POST['nb'] ) ? wp_unslash( $_POST['nb'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Pages::sanitize().
+		$input = isset( $_POST['nemvo_booking'] ) && is_array( $_POST['nemvo_booking'] ) ? wp_unslash( $_POST['nemvo_booking'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Pages::sanitize().
 		if ( isset( $input['fields'] ) ) {
 			$input['fields'] = array_values( $input['fields'] );
 		}
 		update_post_meta( $post_id, Pages::META, Pages::sanitize( $input ) );
 	}
 
+	/**
+	 * Columns of the booking page list.
+	 *
+	 * @param array $columns Default columns.
+	 * @return array
+	 */
 	public static function columns( $columns ) {
 		return array(
-			'cb'          => $columns['cb'],
-			'title'       => $columns['title'],
-			'nb_hosts'    => __( 'Hosts', 'nemvo-booking' ),
-			'nb_duration' => __( 'Length', 'nemvo-booking' ),
-			'nb_upcoming' => __( 'Upcoming bookings', 'nemvo-booking' ),
-			'nb_shown_on' => __( 'Shown on', 'nemvo-booking' ),
-			'nb_code'     => __( 'Shortcode', 'nemvo-booking' ),
+			'cb'                     => $columns['cb'],
+			'title'                  => $columns['title'],
+			'nemvo_booking_hosts'    => __( 'Hosts', 'nemvo-booking' ),
+			'nemvo_booking_duration' => __( 'Length', 'nemvo-booking' ),
+			'nemvo_booking_upcoming' => __( 'Upcoming bookings', 'nemvo-booking' ),
+			'nemvo_booking_shown_on' => __( 'Shown on', 'nemvo-booking' ),
+			'nemvo_booking_code'     => __( 'Shortcode', 'nemvo-booking' ),
 		);
 	}
 
+	/**
+	 * Prints a cell of the booking page list.
+	 *
+	 * @param string $column  Column name.
+	 * @param int    $post_id Booking page ID.
+	 */
 	public static function column( $column, $post_id ) {
 		$cfg = Pages::config( $post_id );
 		switch ( $column ) {
-			case 'nb_hosts':
+			case 'nemvo_booking_hosts':
 				$names = wp_list_pluck( Employees::many( $cfg['employees'] ), 'name' );
 				echo esc_html( $names ? implode( ', ', $names ) : '–' );
 				if ( ! Pages::is_bookable( $cfg ) ) {
 					echo '<br><span class="nb-badge nb-badge--pending">' . esc_html__( 'Not bookable', 'nemvo-booking' ) . '</span>';
 				}
 				break;
-			case 'nb_duration':
+			case 'nemvo_booking_duration':
 				echo esc_html(
 					implode(
 						', ',
@@ -504,7 +594,7 @@ class PageEditor {
 					)
 				);
 				break;
-			case 'nb_upcoming':
+			case 'nemvo_booking_upcoming':
 				list( , $total ) = Bookings::query(
 					array(
 						'view'     => 'upcoming',
@@ -514,14 +604,14 @@ class PageEditor {
 				);
 				printf( '<a href="%s">%d</a>', esc_url( admin_url( 'admin.php?page=nemvo-booking&page_id=' . $post_id ) ), (int) $total );
 				break;
-			case 'nb_shown_on':
+			case 'nemvo_booking_shown_on':
 				$links = array();
 				foreach ( Pages::embedded_on( (int) $post_id ) as $page ) {
-					$links[] = '<a href="' . esc_url( get_permalink( $page ) ) . '" target="_blank">' . esc_html( get_the_title( $page ) ?: '#' . $page->ID ) . '</a>';
+					$links[] = '<a href="' . esc_url( get_permalink( $page ) ) . '" target="_blank">' . esc_html( Plugin::fallback( get_the_title( $page ), '#' . $page->ID ) ) . '</a>';
 				}
 				echo $links ? implode( ', ', $links ) : '<span class="nb-badge nb-badge--pending">' . esc_html__( 'Not on any page', 'nemvo-booking' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				break;
-			case 'nb_code':
+			case 'nemvo_booking_code':
 				printf( '<code>[nemvo_booking id="%d"]</code>', (int) $post_id );
 				break;
 		}

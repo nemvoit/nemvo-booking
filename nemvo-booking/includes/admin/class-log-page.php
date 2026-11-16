@@ -1,4 +1,10 @@
 <?php
+/**
+ * History log screen.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
 use NemvoBooking\Log;
@@ -6,8 +12,14 @@ use NemvoBooking\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
-class LogPage {
+/**
+ * Bookings → History log.
+ */
+class Log_Page {
 
+	/**
+	 * Renders Bookings → History log.
+	 */
 	public static function render() {
 		// phpcs:disable WordPress.Security.NonceVerification
 		$level  = isset( $_GET['level'] ) ? sanitize_key( $_GET['level'] ) : '';
@@ -43,6 +55,11 @@ class LogPage {
 		<?php
 	}
 
+	/**
+	 * Prints log entries as a table (also used on a booking's detail screen).
+	 *
+	 * @param array[] $rows Log rows.
+	 */
 	public static function table( array $rows ) {
 		$format = get_option( 'date_format' ) . ' H:i:s';
 		?>

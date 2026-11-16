@@ -16,7 +16,7 @@ for _ in $(seq 1 60); do
 done
 
 if ! wp core is-installed 2>/dev/null; then
-	wp core install --url=http://localhost:8080 --title="Nemvo Booking Dev" \
+	wp core install --url="http://localhost:${WP_PORT:-8080}" --title="Nemvo Booking Dev" \
 		--admin_user=admin --admin_password=admin --admin_email=admin@example.com --skip-email
 	wp rewrite structure '/%postname%/' --hard
 	wp option update timezone_string Europe/Stockholm
@@ -29,6 +29,6 @@ if [ "${NEMVO_BOOKING_GOOGLE_MOCK:-0}" = "1" ]; then
 fi
 
 echo
-echo "WordPress: http://localhost:8080/wp-admin  (admin / admin)"
-echo "Mailpit:   http://localhost:8025"
-echo "Cap:       http://localhost:3000"
+echo "WordPress: http://localhost:${WP_PORT:-8080}/wp-admin  (admin / admin)"
+echo "Mailpit:   http://localhost:${MAILPIT_PORT:-8025}"
+echo "Cap:       http://localhost:${CAP_PORT:-3000}"

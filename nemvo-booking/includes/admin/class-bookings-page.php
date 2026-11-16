@@ -1,26 +1,48 @@
 <?php
+/**
+ * Bookings screen.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
 use NemvoBooking\Bookings;
 use NemvoBooking\Employees;
 use NemvoBooking\Log;
 use NemvoBooking\Pages;
+use NemvoBooking\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
-class BookingsPage {
+/**
+ * Bookings → Bookings: the list of bookings and the booking detail screen.
+ */
+class Bookings_Page {
 
 	const PAGE = 'nemvo-booking';
 
+	/**
+	 * Hooks in the cancel handler.
+	 */
 	public static function init() {
 		add_action( 'admin_post_nemvo_booking_admin_cancel', array( __CLASS__, 'handle_cancel' ) );
 	}
 
+	/**
+	 * Date and time of a booking in the site's formats.
+	 *
+	 * @param array $booking Booking.
+	 * @return string
+	 */
 	private static function when( array $booking ): string {
 		$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 		return wp_date( $format, $booking['start'] ) . ' – ' . wp_date( get_option( 'time_format' ), $booking['end'] );
 	}
 
+	/**
+	 * Renders Bookings: the list, or one booking when view_booking is set.
+	 */
 	public static function render() {
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['view_booking'] ) ) {
@@ -36,10 +58,10 @@ class BookingsPage {
 		$page_id = isset( $_GET['page_id'] ) ? absint( $_GET['page_id'] ) : 0;
 		$paged   = max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 );
 		// phpcs:enable
-		$per_page          = 25;
+		$per_page             = 25;
 		list( $rows, $total ) = Bookings::query( compact( 'view', 'search', 'page_id', 'paged', 'per_page' ) );
-		$pages             = Pages::published();
-		$views             = array(
+		$pages                = Pages::published();
+		$views                = array(
 			'upcoming'  => __( 'Upcoming', 'nemvo-booking' ),
 			'past'      => __( 'Past', 'nemvo-booking' ),
 			'cancelled' => __( 'Cancelled & failed', 'nemvo-booking' ),
@@ -56,7 +78,15 @@ class BookingsPage {
 				foreach ( $views as $key => $label ) {
 					$links[] = sprintf(
 						'<li><a href="%s" class="%s">%s</a></li>',
-						esc_url( add_query_arg( array( 'page' => self::PAGE, 'view' => $key ), admin_url( 'admin.php' ) ) ),
+						esc_url(
+							add_query_arg(
+								array(
+									'page' => self::PAGE,
+									'view' => $key,
+								),
+								admin_url( 'admin.php' )
+							)
+						),
 						$key === $view ? 'current' : '',
 						esc_html( $label )
 					);
@@ -102,8 +132,8 @@ class BookingsPage {
 							<?php echo ! empty( $booking['answers']['company'] ) ? '<span class="description">· ' . esc_html( $booking['answers']['company'] ) . '</span>' : ''; ?><br>
 							<a href="mailto:<?php echo esc_attr( $booking['email'] ); ?>"><?php echo esc_html( $booking['email'] ); ?></a>
 						</td>
-						<td><?php echo esc_html( get_the_title( $booking['page_id'] ) ?: '–' ); ?></td>
-						<td><?php echo esc_html( implode( ', ', wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ) ) ?: '–' ); ?></td>
+						<td><?php echo esc_html( Plugin::fallback( get_the_title( $booking['page_id'] ), '–' ) ); ?></td>
+						<td><?php echo esc_html( Plugin::fallback( implode( ', ', wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ) ), '–' ) ); ?></td>
 						<td><?php echo Admin::status_badge( $booking['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 						<td class="nb-actions">
 							<?php if ( $booking['meet_link'] && 'confirmed' === $booking['status'] ) : ?>
@@ -120,6 +150,11 @@ class BookingsPage {
 		<?php
 	}
 
+	/**
+	 * Renders one booking with its answers, actions and history.
+	 *
+	 * @param array $booking Booking.
+	 */
 	private static function render_detail( array $booking ) {
 		$cfg          = Pages::config( $booking['page_id'] );
 		list( $logs ) = Log::query(
@@ -138,15 +173,17 @@ class BookingsPage {
 					<h2><?php esc_html_e( 'Meeting', 'nemvo-booking' ); ?></h2>
 					<table class="form-table nb-detail" role="presentation">
 						<tr><th><?php esc_html_e( 'Status', 'nemvo-booking' ); ?></th><td><?php echo Admin::status_badge( $booking['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td></tr>
-						<tr><th><?php esc_html_e( 'When', 'nemvo-booking' ); ?></th><td><?php echo esc_html( self::when( $booking ) ); ?> (<?php echo esc_html( wp_timezone_string() ); ?>)<br><span class="description"><?php
+						<tr><th><?php esc_html_e( 'When', 'nemvo-booking' ); ?></th><td><?php echo esc_html( self::when( $booking ) ); ?> (<?php echo esc_html( wp_timezone_string() ); ?>)<br><span class="description">
+						<?php
 						/* translators: 1: time, 2: timezone */
-						printf( esc_html__( 'Booker\'s time: %1$s (%2$s)', 'nemvo-booking' ), esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $booking['start'], new \DateTimeZone( $booking['timezone'] ?: 'UTC' ) ) ), esc_html( $booking['timezone'] ) );
-						?></span></td></tr>
+						printf( esc_html__( 'Booker\'s time: %1$s (%2$s)', 'nemvo-booking' ), esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $booking['start'], new \DateTimeZone( $booking['timezone'] ? $booking['timezone'] : 'UTC' ) ) ), esc_html( $booking['timezone'] ) );
+						?>
+						</span></td></tr>
 						<tr><th><?php esc_html_e( 'Length', 'nemvo-booking' ); ?></th><td><?php echo esc_html( sprintf( /* translators: %d: minutes */ __( '%d min', 'nemvo-booking' ), $booking['duration'] ) ); ?></td></tr>
 						<tr><th><?php esc_html_e( 'Booking page', 'nemvo-booking' ); ?></th><td><?php echo esc_html( $cfg['title'] ); ?></td></tr>
 						<tr><th><?php esc_html_e( 'Hosts', 'nemvo-booking' ); ?></th><td><?php echo esc_html( implode( ', ', wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ) ) ); ?></td></tr>
 						<tr><th><?php esc_html_e( 'Google Meet', 'nemvo-booking' ); ?></th><td><?php echo $booking['meet_link'] ? '<a href="' . esc_url( $booking['meet_link'] ) . '" target="_blank" rel="noopener">' . esc_html( $booking['meet_link'] ) . '</a>' : '–'; ?></td></tr>
-						<tr><th><?php esc_html_e( 'Guests', 'nemvo-booking' ); ?></th><td><?php echo esc_html( implode( ', ', $booking['guests'] ) ?: '–' ); ?></td></tr>
+						<tr><th><?php esc_html_e( 'Guests', 'nemvo-booking' ); ?></th><td><?php echo esc_html( Plugin::fallback( implode( ', ', $booking['guests'] ), '–' ) ); ?></td></tr>
 						<tr><th><?php esc_html_e( 'Privacy consent', 'nemvo-booking' ); ?></th><td><?php echo $booking['consent_at'] ? esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), \NemvoBooking\Plugin::from_mysql( $booking['consent_at'] ) ) ) : '–'; ?></td></tr>
 						<tr><th><?php esc_html_e( 'Booked', 'nemvo-booking' ); ?></th><td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), \NemvoBooking\Plugin::from_mysql( $booking['created_at'] ) ) ); ?> · IP <?php echo esc_html( $booking['ip'] ); ?></td></tr>
 						<?php if ( 'cancelled' === $booking['status'] ) : ?>
@@ -194,12 +231,15 @@ class BookingsPage {
 
 			<div class="nb-panel">
 				<h2><?php esc_html_e( 'History', 'nemvo-booking' ); ?></h2>
-				<?php LogPage::table( $logs ); ?>
+				<?php Log_Page::table( $logs ); ?>
 			</div>
 		</div>
 		<?php
 	}
 
+	/**
+	 * Admin-post handler: cancels a booking from wp-admin.
+	 */
 	public static function handle_cancel() {
 		Admin::check( 'nemvo_booking_admin_cancel' );
 		$booking = Bookings::get( isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
@@ -209,7 +249,7 @@ class BookingsPage {
 		$reason = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		$result = Bookings::cancel( $booking, $reason, 'admin' );
 		$args   = array( 'view_booking' => $booking['id'] );
-		$args  += is_wp_error( $result ) ? array( 'nb_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nb_notice' => 'cancelled' );
+		$args  += is_wp_error( $result ) ? array( 'nemvo_booking_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nemvo_booking_notice' => 'cancelled' );
 		Admin::redirect( self::PAGE, $args );
 	}
 }

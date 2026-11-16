@@ -1,10 +1,41 @@
 <?php
+/**
+ * Bookings.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
 
+// Bookings, employees and the log live in the plugin's own tables, which have no WordPress API.
+// Queries are prepared; results that are read repeatedly in a request are cached in the class.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+/**
+ * Bookings: creating, cancelling and rescheduling them, and the texts and links that go with them.
+ */
 class Bookings {
 
+	/** URL parameter of the booker's cancel link. */
+	const CANCEL_PARAM = 'nemvo_booking_cancel';
+
+	/** URL parameter of the booker's reschedule link. */
+	const RESCHEDULE_PARAM = 'nemvo_booking_reschedule';
+
+	/** Cancel link parameter in emails sent before 1.2.2; still accepted. */
+	const LEGACY_CANCEL_PARAM = 'nb_cancel';
+
+	/** Reschedule link parameter in emails sent before 1.2.2; still accepted. */
+	const LEGACY_RESCHEDULE_PARAM = 'nb_reschedule';
+
+	/**
+	 * A booking by ID.
+	 *
+	 * @param int $id Booking ID.
+	 * @return array|null The booking, or null when it doesn't exist.
+	 */
 	public static function get( int $id ): ?array {
 		global $wpdb;
 		$table = Plugin::table( 'bookings' );
@@ -12,6 +43,13 @@ class Bookings {
 		return $row ? self::hydrate( $row ) : null;
 	}
 
+	/**
+	 * A booking by the secret token from the booker's links. Short tokens never match, so an
+	 * anonymized booking (empty token) can't be found.
+	 *
+	 * @param string $token Token.
+	 * @return array|null
+	 */
 	public static function by_token( string $token ): ?array {
 		global $wpdb;
 		if ( strlen( $token ) < 20 ) {
@@ -22,25 +60,41 @@ class Bookings {
 		return $row ? self::hydrate( $row ) : null;
 	}
 
+	/**
+	 * Converts a database row: numbers, decoded JSON and Unix timestamps.
+	 *
+	 * @param array $row Database row.
+	 * @return array Booking.
+	 */
 	private static function hydrate( array $row ): array {
 		$row['id']           = (int) $row['id'];
 		$row['page_id']      = (int) $row['page_id'];
 		$row['organizer_id'] = (int) $row['organizer_id'];
 		$row['employee_ids'] = array_values( array_filter( array_map( 'intval', explode( ',', $row['employee_ids'] ) ) ) );
-		$row['guests']       = json_decode( (string) $row['guests'], true ) ?: array();
-		$row['answers']      = json_decode( (string) $row['answers'], true ) ?: array();
+		$row['guests']       = Plugin::fallback( json_decode( (string) $row['guests'], true ), array() );
+		$row['answers']      = Plugin::fallback( json_decode( (string) $row['answers'], true ), array() );
 		$row['start']        = Plugin::from_mysql( $row['start_utc'] );
 		$row['end']          = Plugin::from_mysql( $row['end_utc'] );
 		$row['sequence']     = (int) $row['sequence'];
 		return $row;
 	}
 
+	/**
+	 * Updates columns of a booking.
+	 *
+	 * @param int   $id   Booking ID.
+	 * @param array $data Column => value.
+	 */
 	public static function update( int $id, array $data ) {
 		global $wpdb;
 		$wpdb->update( Plugin::table( 'bookings' ), $data, array( 'id' => $id ) );
 	}
 
 	/**
+	 * Creates a booking: checks the time is still free, creates the Google Calendar event with a
+	 * Meet link in the organizer's calendar, stores it and sends the emails.
+	 *
+	 * @param array $cfg   Booking page configuration.
 	 * @param array $input start (ts), duration, timezone, answers (key => value), guests (emails), page_url, ip, consent (bool).
 	 * @return array|\WP_Error The confirmed booking.
 	 */
@@ -142,6 +196,14 @@ class Bookings {
 		return $booking;
 	}
 
+	/**
+	 * The Google Calendar event for a booking: title, description, time, attendees and a Meet link request.
+	 *
+	 * @param array   $booking Booking.
+	 * @param array   $cfg     Booking page configuration.
+	 * @param array[] $team    Hosts, organizer first.
+	 * @return array Event resource.
+	 */
 	private static function event_body( array $booking, array $cfg, array $team ): array {
 		$attendees = array(
 			array(
@@ -187,18 +249,26 @@ class Bookings {
 	/**
 	 * Text of the calendar invitation (Settings → Calendar invitations). With Google invites this is
 	 * the only message the booker receives, so it carries the answers and the change/cancel links.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 * @return string Plain text.
 	 */
 	public static function event_description( array $booking, array $cfg ): string {
 		$template = (string) Settings::get( 'event_description' );
 		if ( empty( $cfg['allow_reschedule'] ) ) {
 			$template = preg_replace( '/^.*\{reschedule_link\}.*\R?/m', '', $template );
 		}
-		$text = self::render( $template, self::vars( $booking, $cfg, $booking['timezone'] ?: $cfg['timezone'] ), false );
+		$text = self::render( $template, self::vars( $booking, $cfg, $booking['timezone'] ? $booking['timezone'] : $cfg['timezone'] ), false );
 		return trim( preg_replace( "/\n{3,}/", "\n\n", $text ) );
 	}
 
 	/**
-	 * @param string $by 'booker' or 'admin'.
+	 * Cancels a booking: deletes the Google event, marks the booking cancelled and notifies everyone.
+	 *
+	 * @param array  $booking Booking.
+	 * @param string $reason  Reason given, may be empty.
+	 * @param string $by      'booker' or 'admin'.
 	 * @return true|\WP_Error
 	 */
 	public static function cancel( array $booking, string $reason, string $by ) {
@@ -211,7 +281,8 @@ class Bookings {
 
 		$organizer = Employees::get( $booking['organizer_id'] );
 		if ( $booking['event_id'] && $organizer && Employees::is_connected( $organizer ) ) {
-			$deleted = Google::delete_event( $organizer, $booking['calendar_id'], $booking['event_id'], 'google' === Settings::get( 'invite_mode' ) );
+			$google_sends = 'google' === Settings::get( 'invite_mode' );
+			$deleted      = Google::delete_event( $organizer, $booking['calendar_id'], $booking['event_id'], $google_sends );
 			if ( is_wp_error( $deleted ) ) {
 				Log::warning(
 					'google.delete_failed',
@@ -253,6 +324,9 @@ class Bookings {
 	/**
 	 * Moves a confirmed booking to a new time. The Google event (and its Meet link) is kept and updated.
 	 *
+	 * @param array  $booking Booking.
+	 * @param int    $start   New start time (Unix timestamp).
+	 * @param string $by      'booker' or 'admin'.
 	 * @return array|\WP_Error The updated booking.
 	 */
 	public static function reschedule( array $booking, int $start, string $by = 'booker' ) {
@@ -333,6 +407,14 @@ class Bookings {
 		return $booking;
 	}
 
+	/**
+	 * Whether the booker may still pick a new time: rescheduling is on for the page and the meeting
+	 * is confirmed and hasn't started.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 * @return bool
+	 */
 	public static function can_reschedule( array $booking, array $cfg ): bool {
 		return 'confirmed' === $booking['status'] && $booking['start'] > time() && ! empty( $cfg['allow_reschedule'] ) && '' !== $booking['email'];
 	}
@@ -340,6 +422,8 @@ class Bookings {
 	/**
 	 * Removes personal data but keeps the booking's time, page and hosts (for statistics).
 	 * Also removes the booking's history log entries, which contain names and emails.
+	 *
+	 * @param array $booking Booking.
 	 */
 	public static function anonymize( array $booking ) {
 		global $wpdb;
@@ -359,17 +443,35 @@ class Bookings {
 		$wpdb->delete( Plugin::table( 'log' ), array( 'booking_id' => $booking['id'] ) );
 	}
 
+	/**
+	 * The booker's personal cancel link: the page they booked on, with their token.
+	 *
+	 * @param array $booking Booking.
+	 * @return string URL.
+	 */
 	public static function cancel_url( array $booking ): string {
-		$base = $booking['page_url'] ?: home_url( '/' );
-		return add_query_arg( 'nb_cancel', $booking['token'], $base );
+		$base = $booking['page_url'] ? $booking['page_url'] : home_url( '/' );
+		return add_query_arg( self::CANCEL_PARAM, $booking['token'], $base );
 	}
 
+	/**
+	 * The booker's personal link to pick a new time.
+	 *
+	 * @param array $booking Booking.
+	 * @return string URL.
+	 */
 	public static function reschedule_url( array $booking ): string {
-		$base = $booking['page_url'] ?: home_url( '/' );
-		return add_query_arg( 'nb_reschedule', $booking['token'], $base );
+		$base = $booking['page_url'] ? $booking['page_url'] : home_url( '/' );
+		return add_query_arg( self::RESCHEDULE_PARAM, $booking['token'], $base );
 	}
 
-	/** Form answers as [label, value] pairs, using the page's current field labels. */
+	/**
+	 * Form answers as [label, value] pairs, using the page's current field labels.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 * @return array[]
+	 */
 	public static function answer_rows( array $booking, array $cfg ): array {
 		$labels = array_column( $cfg['fields'], 'label', 'key' );
 		$types  = array_column( $cfg['fields'], 'type', 'key' );
@@ -386,7 +488,15 @@ class Bookings {
 		return $rows;
 	}
 
-	/** Placeholder values (plain text) for templates. */
+	/**
+	 * Placeholder values (plain text) for templates.
+	 *
+	 * @param array  $booking        Booking.
+	 * @param array  $cfg            Booking page configuration.
+	 * @param string $timezone       Time zone for dates and times.
+	 * @param string $recipient_name Name for {recipient_name}; the booker's name when empty.
+	 * @return string[] Placeholder name (without braces) => value.
+	 */
 	public static function vars( array $booking, array $cfg, string $timezone, string $recipient_name = '' ): array {
 		$tz    = Plugin::timezone( $timezone );
 		$hosts = Employees::many( $booking['employee_ids'] );
@@ -404,32 +514,37 @@ class Bookings {
 		return array_merge(
 			$vars,
 			array(
-				'name'           => $booking['name'],
-				'email'          => $booking['email'],
-				'recipient_name' => $recipient_name ?: $booking['name'],
-				'page_title'     => $cfg['title'],
-				'date'           => wp_date( Plugin::date_format(), $booking['start'], $tz ),
-				'time'           => wp_date( Plugin::time_format(), $booking['start'], $tz ),
-				'end_time'       => wp_date( Plugin::time_format(), $booking['end'], $tz ),
-				'timezone'       => str_replace( '_', ' ', $tz->getName() ),
-				'duration'       => (string) $booking['duration'],
-				'host'           => implode( ', ', wp_list_pluck( $hosts, 'name' ) ),
-				'meet_link'      => $booking['meet_link'],
-				'cancel_link'    => self::cancel_url( $booking ),
+				'name'            => $booking['name'],
+				'email'           => $booking['email'],
+				'recipient_name'  => $recipient_name ? $recipient_name : $booking['name'],
+				'page_title'      => $cfg['title'],
+				'date'            => wp_date( Plugin::date_format(), $booking['start'], $tz ),
+				'time'            => wp_date( Plugin::time_format(), $booking['start'], $tz ),
+				'end_time'        => wp_date( Plugin::time_format(), $booking['end'], $tz ),
+				'timezone'        => str_replace( '_', ' ', $tz->getName() ),
+				'duration'        => (string) $booking['duration'],
+				'host'            => implode( ', ', wp_list_pluck( $hosts, 'name' ) ),
+				'meet_link'       => $booking['meet_link'],
+				'cancel_link'     => self::cancel_url( $booking ),
 				'reschedule_link' => self::reschedule_url( $booking ),
-				'old_date'       => isset( $booking['old_start'] ) ? wp_date( Plugin::date_format(), $booking['old_start'], $tz ) : '',
-				'old_time'       => isset( $booking['old_start'] ) ? wp_date( Plugin::time_format(), $booking['old_start'], $tz ) : '',
-				'booking_url'    => $booking['page_url'] ?: home_url( '/' ),
-				'guests'         => $booking['guests'] ? implode( ', ', $booking['guests'] ) : '–',
-				'answers'        => implode( "\n", $answers ),
-				'cancel_reason'  => $booking['cancel_reason'] ?: '–',
-				'site_name'      => get_bloginfo( 'name' ),
+				'old_date'        => isset( $booking['old_start'] ) ? wp_date( Plugin::date_format(), $booking['old_start'], $tz ) : '',
+				'old_time'        => isset( $booking['old_start'] ) ? wp_date( Plugin::time_format(), $booking['old_start'], $tz ) : '',
+				'booking_url'     => $booking['page_url'] ? $booking['page_url'] : home_url( '/' ),
+				'guests'          => $booking['guests'] ? implode( ', ', $booking['guests'] ) : '–',
+				'answers'         => implode( "\n", $answers ),
+				'cancel_reason'   => $booking['cancel_reason'] ? $booking['cancel_reason'] : '–',
+				'site_name'       => get_bloginfo( 'name' ),
 			)
 		);
 	}
 
 	/**
 	 * Replaces {placeholders}. In HTML mode values are escaped, URLs linked and newlines kept.
+	 *
+	 * @param string   $template Template text.
+	 * @param string[] $vars     Values from vars().
+	 * @param bool     $html     True for HTML, false for plain text.
+	 * @return string
 	 */
 	public static function render( string $template, array $vars, bool $html = true ): string {
 		$replace = array();
@@ -444,17 +559,23 @@ class Bookings {
 		return $out;
 	}
 
-	/** Booking summary for the frontend, formatted in the booker's timezone. */
+	/**
+	 * Booking summary for the frontend, formatted in the booker's timezone.
+	 *
+	 * @param array $booking Booking.
+	 * @param array $cfg     Booking page configuration.
+	 * @return array
+	 */
 	public static function summary( array $booking, array $cfg ): array {
-		$tz = Plugin::timezone( $booking['timezone'] ?: $cfg['timezone'] );
+		$tz = Plugin::timezone( $booking['timezone'] ? $booking['timezone'] : $cfg['timezone'] );
 		return array(
-			'title'     => $cfg['title'],
-			'status'    => $booking['status'],
-			'date'      => wp_date( Plugin::date_format(), $booking['start'], $tz ),
-			'time'      => wp_date( Plugin::time_format(), $booking['start'], $tz ) . ' – ' . wp_date( Plugin::time_format(), $booking['end'], $tz ),
-			'timezone'  => str_replace( '_', ' ', $tz->getName() ),
-			'duration'  => $booking['duration'],
-			'hosts'     => wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ),
+			'title'         => $cfg['title'],
+			'status'        => $booking['status'],
+			'date'          => wp_date( Plugin::date_format(), $booking['start'], $tz ),
+			'time'          => wp_date( Plugin::time_format(), $booking['start'], $tz ) . ' – ' . wp_date( Plugin::time_format(), $booking['end'], $tz ),
+			'timezone'      => str_replace( '_', ' ', $tz->getName() ),
+			'duration'      => $booking['duration'],
+			'hosts'         => wp_list_pluck( Employees::many( $booking['employee_ids'] ), 'name' ),
 			'meetLink'      => $booking['meet_link'],
 			'start'         => $booking['start'],
 			'canCancel'     => 'confirmed' === $booking['status'] && $booking['start'] > time(),
@@ -463,6 +584,9 @@ class Bookings {
 	}
 
 	/**
+	 * Bookings for the Bookings screen.
+	 *
+	 * @param array $args view (upcoming, past, cancelled or all), page_id, search, per_page and page.
 	 * @return array{0: array, 1: int} Rows and total.
 	 */
 	public static function query( array $args ): array {
@@ -505,11 +629,11 @@ class Bookings {
 		$offset    = max( 0, ( (int) ( $args['paged'] ?? 1 ) - 1 ) * $per_page );
 
 		// $where_sql and $order are built above from fixed strings; every value is a placeholder.
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE {$where_sql}", array_merge( array( $table ), $vals ) ) );
 		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE {$where_sql} ORDER BY {$order} LIMIT %d OFFSET %d", array_merge( array( $table ), $vals, array( $per_page, $offset ) ) ), ARRAY_A );
-		// phpcs:enable
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
-		return array( array_map( array( __CLASS__, 'hydrate' ), $rows ?: array() ), $total );
+		return array( array_map( array( __CLASS__, 'hydrate' ), $rows ? $rows : array() ), $total );
 	}
 }

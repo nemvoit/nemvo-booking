@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<ruleset name="Nemvo Booking">
+	<description>WordPress Coding Standards for Nemvo Booking.</description>
+	<file>./nemvo-booking</file>
+	<exclude-pattern>*/assets/vendor/*</exclude-pattern>
+	<arg name="extensions" value="php"/>
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_supported_wp_version" value="6.2"/>
+	<rule ref="WordPress"/>
+	<rule ref="PHPCompatibilityWP"/>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="nemvo-booking"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="nemvo_booking"/>
+				<element value="NemvoBooking"/>
+				<element value="NEMVO_BOOKING"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

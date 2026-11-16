@@ -1,4 +1,10 @@
 <?php
+/**
+ * Spam and abuse protection.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
@@ -12,6 +18,14 @@ class Protection {
 	/** Version of the Cap widget bundled in assets/vendor/cap. */
 	const CAP_VERSION = '0.1.58';
 
+	/** Cap relay requests per visitor IP and hour (each solve takes two: challenge and redeem). */
+	const CAP_RELAY_LIMIT = 60;
+
+	/**
+	 * Whether Cap is switched on and fully configured.
+	 *
+	 * @return bool
+	 */
 	public static function cap_enabled(): bool {
 		$s = Settings::all();
 		return $s['cap_enabled'] && $s['cap_url'] && $s['cap_site_key'] && $s['cap_secret'];
@@ -20,6 +34,8 @@ class Protection {
 	/**
 	 * Endpoint the visitor's browser talks to: the public Cap address if one is set, otherwise the
 	 * relay below, so Cap can stay on an internal network and visitors only talk to this site.
+	 *
+	 * @return string URL ending in a slash.
 	 */
 	public static function cap_endpoint(): string {
 		$s = Settings::all();
@@ -29,7 +45,13 @@ class Protection {
 		return trailingslashit( rest_url( Rest::NS . '/cap' ) );
 	}
 
-	/** Endpoint WordPress uses for a Cap request (the server address as WordPress reaches it). */
+	/**
+	 * Endpoint WordPress uses for a Cap request (the server address as WordPress reaches it).
+	 *
+	 * @param array  $s      Settings with cap_url and cap_site_key.
+	 * @param string $action challenge, redeem or siteverify.
+	 * @return string URL.
+	 */
 	private static function cap_server_url( array $s, string $action ): string {
 		return trailingslashit( $s['cap_url'] ) . rawurlencode( (string) $s['cap_site_key'] ) . '/' . $action;
 	}
@@ -43,16 +65,27 @@ class Protection {
 				array(
 					'methods'             => 'POST',
 					'callback'            => array( __CLASS__, 'relay_cap' ),
+					// Public: anonymous visitors' browsers fetch and redeem Cap puzzles here before they
+					// book. Only answers when Cap is enabled, takes no parameters (the JSON body is passed
+					// on to the site owner's Cap server as it is, up to 64 KB) and is rate-limited per IP.
 					'permission_callback' => '__return_true',
 				)
 			);
 		}
 	}
 
-	/** Forwards a challenge or redeem request from the widget to the Cap server. */
+	/**
+	 * Forwards a challenge or redeem request from the widget to the Cap server.
+	 *
+	 * @param \WP_REST_Request $request Request from the widget.
+	 * @return \WP_REST_Response Cap's answer, or an error.
+	 */
 	public static function relay_cap( \WP_REST_Request $request ): \WP_REST_Response {
 		if ( ! self::cap_enabled() ) {
 			return new \WP_REST_Response( array( 'error' => 'Cap is not enabled.' ), 404 );
+		}
+		if ( self::rate_limited( 'cap', self::CAP_RELAY_LIMIT ) ) {
+			return new \WP_REST_Response( array( 'error' => 'Too many requests.' ), 429 );
 		}
 		$action = substr( $request->get_route(), strrpos( $request->get_route(), '/' ) + 1 );
 		$body   = (string) $request->get_body();
@@ -80,6 +113,11 @@ class Protection {
 		return $out;
 	}
 
+	/**
+	 * Spam protection settings for the widget script.
+	 *
+	 * @return array
+	 */
 	public static function client_config(): array {
 		$s = Settings::all();
 		return array(
@@ -93,35 +131,33 @@ class Protection {
 	}
 
 	/**
-	 * Loads the bundled Cap widget, or the one from the "Widget script URL" setting. The widget
-	 * fetches its WASM solvers from the folder its script is in, so nothing comes from a CDN.
+	 * Loads the bundled Cap widget. The globals point the widget at the bundled WASM solvers and
+	 * pako, so its built-in jsDelivr fallback URLs are never used, and stop it from adding the
+	 * page address and referrer to its "Cap" credit link.
 	 */
 	public static function enqueue_cap() {
 		if ( ! self::cap_enabled() ) {
 			return;
 		}
 		$bundled = NEMVO_BOOKING_URL . 'assets/vendor/cap/';
-		$custom  = (string) Settings::get( 'cap_script_url' );
-		if ( $custom ) {
-			wp_enqueue_script( 'nemvo-booking-cap', $custom, array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- the URL is the site owner's own.
-			$wasm = trailingslashit( dirname( $custom ) );
-		} else {
-			wp_enqueue_script( 'nemvo-booking-cap', $bundled . 'cap.min.js', array(), self::CAP_VERSION, true );
-			$wasm = $bundled;
-		}
+		wp_enqueue_script( 'nemvo-booking-cap', $bundled . 'cap.min.js', array(), self::CAP_VERSION, true );
 		wp_add_inline_script(
 			'nemvo-booking-cap',
 			sprintf(
-				'window.CAP_CUSTOM_WASM_URL=%1$s;window.CAP_CUSTOM_HASHWX_URL=%2$s;window.CAP_PAKO_URL=%3$s;',
-				wp_json_encode( $wasm . 'cap_wasm_bg.wasm' ),
-				wp_json_encode( $wasm . 'hashwx.wasm' ),
+				'window.CAP_CUSTOM_WASM_URL=%1$s;window.CAP_CUSTOM_HASHWX_URL=%2$s;window.CAP_PAKO_URL=%3$s;window.CAP_DISABLE_WIDGET_REF=true;',
+				wp_json_encode( $bundled . 'cap_wasm_bg.wasm' ),
+				wp_json_encode( $bundled . 'hashwx.wasm' ),
 				wp_json_encode( $bundled . 'pako_inflate.min.js' )
 			),
 			'before'
 		);
 	}
 
-	/** Signed timestamp handed to the widget when the calendar loads; used for the time-to-submit check. */
+	/**
+	 * Signed timestamp handed to the widget when the calendar loads; used for the time-to-submit check.
+	 *
+	 * @return string
+	 */
 	public static function form_token(): string {
 		return Crypto::sign(
 			array(
@@ -132,8 +168,10 @@ class Protection {
 	}
 
 	/**
-	 * Runs all checks before a booking is created.
+	 * Runs all checks before a booking is created. Blocked attempts are logged as spam.blocked.
 	 *
+	 * @param \WP_REST_Request $request Booking request.
+	 * @param string           $email   Booker's email address.
 	 * @return true|\WP_Error
 	 */
 	public static function check_booking( \WP_REST_Request $request, string $email ) {
@@ -183,14 +221,31 @@ class Protection {
 		return true;
 	}
 
+	/**
+	 * Logs a blocked booking attempt and returns the error for the visitor.
+	 *
+	 * @param string $check   Name of the check.
+	 * @param string $detail  Why it was blocked (for the log).
+	 * @param string $message Message for the visitor.
+	 * @param string $email   Booker's email address.
+	 * @param int    $status  HTTP status.
+	 * @return \WP_Error
+	 */
 	private static function block( string $check, string $detail, string $message, string $email, int $status = 400 ): \WP_Error {
 		Log::warning(
 			'spam.blocked',
-			sprintf( 'Booking attempt blocked (%1$s): %2$s Email: %3$s, IP: %4$s', $check, $detail, $email ?: '–', Plugin::client_ip() )
+			sprintf( 'Booking attempt blocked (%1$s): %2$s Email: %3$s, IP: %4$s', $check, $detail, $email ? $email : '–', Plugin::client_ip() )
 		);
 		return new \WP_Error( 'blocked', $message, array( 'status' => $status ) );
 	}
 
+	/**
+	 * Counts a request from the visitor's IP address and tells whether the hourly limit is reached.
+	 *
+	 * @param string $bucket What is limited, e.g. book, cancel or cap.
+	 * @param int    $max    Requests allowed per hour.
+	 * @return bool True when the limit is reached (the request is then not counted).
+	 */
 	public static function rate_limited( string $bucket, int $max ): bool {
 		$key   = 'nemvo_booking_rl_' . $bucket . '_' . md5( Plugin::client_ip() );
 		$count = (int) get_transient( $key );
@@ -201,9 +256,16 @@ class Protection {
 		return false;
 	}
 
+	/**
+	 * Whether the email, its domain (or a parent domain) or the IP address is on the blocklist.
+	 *
+	 * @param string $email Email address.
+	 * @param string $ip    IP address.
+	 * @return bool
+	 */
 	private static function is_blocklisted( string $email, string $ip ): bool {
 		$email  = strtolower( $email );
-		$domain = substr( strrchr( $email, '@' ) ?: '', 1 );
+		$domain = substr( Plugin::fallback( strrchr( $email, '@' ), '' ), 1 );
 		foreach ( preg_split( '/\R/', strtolower( (string) Settings::get( 'blocklist' ) ) ) as $entry ) {
 			$entry = trim( preg_replace( '/\s.*$/', '', trim( $entry ) ) );
 			if ( '' === $entry || '#' === $entry[0] ) {
@@ -217,7 +279,12 @@ class Protection {
 		return false;
 	}
 
-	/** @return string Reason when the request looks automated, empty otherwise. */
+	/**
+	 * Looks for signs of an automated browser or HTTP library.
+	 *
+	 * @param \WP_REST_Request $request Booking request.
+	 * @return string Reason when the request looks automated, empty otherwise.
+	 */
 	private static function headless_reason( \WP_REST_Request $request ): string {
 		$ua = (string) $request->get_header( 'user_agent' );
 		if ( '' === $ua ) {
@@ -234,7 +301,12 @@ class Protection {
 		return $signals ? implode( ', ', $signals ) : '';
 	}
 
-	/** @return true|\WP_Error */
+	/**
+	 * Checks a token from the Cap widget with the Cap server. Fails closed when Cap can't be reached.
+	 *
+	 * @param string $token Token from the widget.
+	 * @return true|\WP_Error
+	 */
 	public static function verify_cap( string $token ) {
 		if ( '' === $token ) {
 			return new \WP_Error( 'cap_missing', 'No CAPTCHA token was submitted.' );
@@ -269,6 +341,7 @@ class Protection {
 	 * real one (site key first), because Cap only checks the keys after the token's shape; a valid key
 	 * pair then gets "Token not found".
 	 *
+	 * @param array $settings cap_url, cap_site_key and cap_secret.
 	 * @return true|\WP_Error
 	 */
 	public static function test_cap( array $settings ) {

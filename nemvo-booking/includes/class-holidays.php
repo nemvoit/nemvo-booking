@@ -1,4 +1,10 @@
 <?php
+/**
+ * Public holidays and closed dates.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking;
 
 defined( 'ABSPATH' ) || exit;
@@ -8,6 +14,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class Holidays {
 
+	/**
+	 * Google public holiday calendars offered in the settings.
+	 *
+	 * @return string[] Calendar ID => country name.
+	 */
 	public static function calendars(): array {
 		$suffix = '#holiday@group.v.calendar.google.com';
 		$list   = array(
@@ -35,6 +46,11 @@ class Holidays {
 		return $out;
 	}
 
+	/**
+	 * Holiday calendar preselected on a new install, guessed from the site language.
+	 *
+	 * @return string Calendar ID.
+	 */
 	public static function default_calendar(): string {
 		$map    = array(
 			'sv' => 'en.swedish',
@@ -80,12 +96,17 @@ class Holidays {
 	}
 
 	/**
-	 * Public holidays between two dates (inclusive), as [Y-m-d => name].
+	 * Public holidays between two dates (inclusive).
+	 *
+	 * @param string $from First date, Y-m-d.
+	 * @param string $to   Last date, Y-m-d.
+	 * @return string[] Y-m-d => holiday name.
 	 */
 	public static function public_holidays( string $from, string $to ): array {
 		$out = array();
 		foreach ( self::calendar_ids() as $calendar ) {
-			for ( $year = (int) substr( $from, 0, 4 ); $year <= (int) substr( $to, 0, 4 ); $year++ ) {
+			$last_year = (int) substr( $to, 0, 4 );
+			for ( $year = (int) substr( $from, 0, 4 ); $year <= $last_year; $year++ ) {
 				foreach ( self::year( $calendar, $year ) as $date => $name ) {
 					if ( $date < $from || $date > $to ) {
 						continue;
@@ -98,6 +119,14 @@ class Holidays {
 		return $out;
 	}
 
+	/**
+	 * Holidays of one calendar and year, read from Google through a connected employee and
+	 * cached for a day (an hour after an error).
+	 *
+	 * @param string $calendar Calendar ID.
+	 * @param int    $year     Year.
+	 * @return string[] Y-m-d => holiday name.
+	 */
 	private static function year( string $calendar, int $year ): array {
 		$include_observances = (bool) Settings::get( 'include_observances' );
 		$key                 = 'nemvo_booking_hol_' . md5( $calendar . $year . (int) $include_observances );

@@ -1,45 +1,86 @@
 <?php
+/**
+ * The wp-admin menu and shared admin helpers.
+ *
+ * @package NemvoBooking
+ */
+
 namespace NemvoBooking\Admin;
 
 use NemvoBooking\Employees;
 use NemvoBooking\Google;
 use NemvoBooking\Pages;
+use NemvoBooking\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * The Bookings menu in wp-admin and helpers shared by its screens.
+ */
 class Admin {
 
 	const SLUG = 'nemvo-booking';
-	const CAP  = 'manage_options';
 
+	/**
+	 * Hooks in the menu, assets and notices, and starts the admin screens.
+	 */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 9 );
 		add_action( 'admin_menu', array( __CLASS__, 'submenus' ), 11 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
+		add_action( 'load-edit.php', array( __CLASS__, 'redirect_legacy_post_type' ) );
+		add_action( 'load-post-new.php', array( __CLASS__, 'redirect_legacy_post_type' ) );
 
-		SettingsPage::init();
-		EmployeesPage::init();
-		PageEditor::init();
-		BookingsPage::init();
+		Settings_Page::init();
+		Employees_Page::init();
+		Page_Editor::init();
+		Bookings_Page::init();
 	}
 
+	/**
+	 * Bookmarks to the booking page list from before 1.2.2 use the old post type name: send them
+	 * to the same screen under the new name.
+	 */
+	public static function redirect_legacy_post_type() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only compared, then redirected to a fixed screen.
+		if ( isset( $_GET['post_type'] ) && Pages::LEGACY_CPT === $_GET['post_type'] ) {
+			global $pagenow;
+			wp_safe_redirect( admin_url( $pagenow . '?post_type=' . Pages::CPT ) );
+			exit;
+		}
+	}
+
+	/**
+	 * Adds the Bookings menu.
+	 */
 	public static function menu() {
-		add_menu_page( __( 'Bookings', 'nemvo-booking' ), __( 'Bookings', 'nemvo-booking' ), self::CAP, self::SLUG, array( BookingsPage::class, 'render' ), 'dashicons-calendar-alt', 26 );
-		add_submenu_page( self::SLUG, __( 'Bookings', 'nemvo-booking' ), __( 'Bookings', 'nemvo-booking' ), self::CAP, self::SLUG, array( BookingsPage::class, 'render' ) );
+		add_menu_page( __( 'Bookings', 'nemvo-booking' ), __( 'Bookings', 'nemvo-booking' ), Plugin::capability(), self::SLUG, array( Bookings_Page::class, 'render' ), 'dashicons-calendar-alt', 26 );
+		add_submenu_page( self::SLUG, __( 'Bookings', 'nemvo-booking' ), __( 'Bookings', 'nemvo-booking' ), Plugin::capability(), self::SLUG, array( Bookings_Page::class, 'render' ) );
 	}
 
+	/**
+	 * Adds Employees, History log and Settings below the booking pages.
+	 */
 	public static function submenus() {
-		add_submenu_page( self::SLUG, __( 'Employees', 'nemvo-booking' ), __( 'Employees', 'nemvo-booking' ), self::CAP, self::SLUG . '-employees', array( EmployeesPage::class, 'render' ) );
-		add_submenu_page( self::SLUG, __( 'History log', 'nemvo-booking' ), __( 'History log', 'nemvo-booking' ), self::CAP, self::SLUG . '-log', array( LogPage::class, 'render' ) );
-		add_submenu_page( self::SLUG, __( 'Booking settings', 'nemvo-booking' ), __( 'Settings', 'nemvo-booking' ), self::CAP, self::SLUG . '-settings', array( SettingsPage::class, 'render' ) );
+		add_submenu_page( self::SLUG, __( 'Employees', 'nemvo-booking' ), __( 'Employees', 'nemvo-booking' ), Plugin::capability(), self::SLUG . '-employees', array( Employees_Page::class, 'render' ) );
+		add_submenu_page( self::SLUG, __( 'History log', 'nemvo-booking' ), __( 'History log', 'nemvo-booking' ), Plugin::capability(), self::SLUG . '-log', array( Log_Page::class, 'render' ) );
+		add_submenu_page( self::SLUG, __( 'Booking settings', 'nemvo-booking' ), __( 'Settings', 'nemvo-booking' ), Plugin::capability(), self::SLUG . '-settings', array( Settings_Page::class, 'render' ) );
 	}
 
+	/**
+	 * Whether the current screen belongs to the plugin.
+	 *
+	 * @return bool
+	 */
 	private static function is_our_screen(): bool {
 		$screen = get_current_screen();
 		return $screen && ( false !== strpos( $screen->id, self::SLUG ) || Pages::CPT === $screen->post_type );
 	}
 
+	/**
+	 * Loads the admin stylesheet and script on the plugin's screens.
+	 */
 	public static function assets() {
 		if ( ! self::is_our_screen() ) {
 			return;
@@ -65,6 +106,9 @@ class Admin {
 		);
 	}
 
+	/**
+	 * Shows the broken-connection warning everywhere, and the plugin's own notices on its screens.
+	 */
 	public static function notices() {
 		self::broken_connection_notice();
 		if ( ! self::is_our_screen() ) {
@@ -91,18 +135,20 @@ class Admin {
 			'link'         => __( 'A new connect link was created. Copy it and send it to the employee.', 'nemvo-booking' ),
 			'cancelled'    => __( 'The booking was cancelled and everyone has been notified.', 'nemvo-booking' ),
 		);
-		if ( isset( $_GET['nb_notice'], $messages[ $_GET['nb_notice'] ] ) ) {
-			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $messages[ sanitize_key( $_GET['nb_notice'] ) ] ) );
+		if ( isset( $_GET['nemvo_booking_notice'], $messages[ $_GET['nemvo_booking_notice'] ] ) ) {
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $messages[ sanitize_key( $_GET['nemvo_booking_notice'] ) ] ) );
 		}
-		if ( isset( $_GET['nb_error'] ) ) {
-			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( sanitize_text_field( wp_unslash( $_GET['nb_error'] ) ) ) );
+		if ( isset( $_GET['nemvo_booking_error'] ) ) {
+			printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( sanitize_text_field( wp_unslash( $_GET['nemvo_booking_error'] ) ) ) );
 		}
 		// phpcs:enable
 	}
 
-	/** Shown on every admin screen while a host's Google connection is broken, since bookings stop. */
+	/**
+	 * Shown on every admin screen while a host's Google connection is broken, since bookings stop.
+	 */
 	private static function broken_connection_notice() {
-		if ( ! current_user_can( self::CAP ) ) {
+		if ( ! current_user_can( Plugin::capability() ) ) {
 			return;
 		}
 		foreach ( Employees::all() as $employee ) {
@@ -129,28 +175,51 @@ class Admin {
 		}
 	}
 
-	/** Verifies capability and nonce for admin-post handlers. */
+	/**
+	 * Verifies capability and nonce for admin-post handlers.
+	 *
+	 * @param string $action Nonce action.
+	 */
 	public static function check( string $action ) {
-		if ( ! current_user_can( self::CAP ) ) {
+		if ( ! current_user_can( Plugin::capability() ) ) {
 			wp_die( esc_html__( 'You are not allowed to do this.', 'nemvo-booking' ), 403 );
 		}
 		check_admin_referer( $action );
 	}
 
+	/**
+	 * Redirects to one of the plugin's screens and ends the request.
+	 *
+	 * @param string $page Admin page slug.
+	 * @param array  $args Query arguments.
+	 */
 	public static function redirect( string $page, array $args = array() ) {
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=' . $page ) ) );
 		exit;
 	}
 
-	public static function copy_field( string $value, string $class = 'regular-text' ): string {
+	/**
+	 * A read-only text field with a Copy button.
+	 *
+	 * @param string $value     Text to copy.
+	 * @param string $css_class Class of the input.
+	 * @return string HTML.
+	 */
+	public static function copy_field( string $value, string $css_class = 'regular-text' ): string {
 		return sprintf(
-			'<span class="nb-copy"><input type="text" readonly class="%1$s code" value="%2$s" onfocus="this.select()"><button type="button" class="button" data-copy>%3$s</button></span>',
-			esc_attr( $class ),
+			'<span class="nb-copy"><input type="text" readonly class="%1$s code" value="%2$s"><button type="button" class="button" data-copy>%3$s</button></span>',
+			esc_attr( $css_class ),
 			esc_attr( $value ),
 			esc_html__( 'Copy', 'nemvo-booking' )
 		);
 	}
 
+	/**
+	 * A colored status label.
+	 *
+	 * @param string $status Booking status or log level.
+	 * @return string HTML.
+	 */
 	public static function status_badge( string $status ): string {
 		$labels = array(
 			'confirmed' => __( 'Confirmed', 'nemvo-booking' ),
@@ -164,6 +233,13 @@ class Admin {
 		return sprintf( '<span class="nb-badge nb-badge--%1$s">%2$s</span>', esc_attr( $status ), esc_html( $labels[ $status ] ?? $status ) );
 	}
 
+	/**
+	 * Prints page links below a table.
+	 *
+	 * @param int $total    Number of rows.
+	 * @param int $per_page Rows per page.
+	 * @param int $current  Current page.
+	 */
 	public static function pagination( int $total, int $per_page, int $current ) {
 		$pages = (int) ceil( $total / $per_page );
 		if ( $pages < 2 ) {
