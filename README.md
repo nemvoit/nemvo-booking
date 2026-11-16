@@ -42,7 +42,7 @@ Requires WordPress 6.2 or later and PHP 7.4 or later. MIT licensed.
 
 ## Installation
 
-Download `nemvo-booking-<version>.zip` from the [latest release](https://github.com/fpoller/nemvo-booking/releases/latest) and upload it under **Plugins → Add New Plugin → Upload Plugin**. Once the plugin is in the WordPress.org directory, you can also search for *Nemvo Booking* there.
+Download `nemvo-booking-<version>.zip` from the [latest release](https://github.com/nemvoit/nemvo-booking/releases/latest) and upload it under **Plugins → Add New Plugin → Upload Plugin**. Once the plugin is in the WordPress.org directory, you can also search for *Nemvo Booking* there.
 
 Then:
 

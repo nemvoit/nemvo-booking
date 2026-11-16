@@ -61,11 +61,11 @@ Bookings live on your own site, with no booking service in between. The plugin o
 
 = Works with your theme =
 
-The calendar adapts to the space it gets, from a phone to a full-width section, in any theme. Its styles are scoped, so theme button and heading styles don't change it. Colors, fonts, sizes and corners can be changed from your theme with CSS custom properties. The [Styling guide](https://github.com/fpoller/nemvo-booking#styling) lists them all.
+The calendar adapts to the space it gets, from a phone to a full-width section, in any theme. Its styles are scoped, so theme button and heading styles don't change it. Colors, fonts, sizes and corners can be changed from your theme with CSS custom properties. The [Styling guide](https://github.com/nemvoit/nemvo-booking#styling) lists them all.
 
 Booking pages include tips for GeneratePress and GenerateBlocks when those are active.
 
-Development happens on [GitHub](https://github.com/fpoller/nemvo-booking).
+Development happens on [GitHub](https://github.com/nemvoit/nemvo-booking).
 
 == External services ==
 
@@ -158,7 +158,7 @@ Choose an accent color under **Bookings → Settings → Appearance**. For more,
 
 `.nb-booking { --nb-accent: #0b5cad; --nb-font: "Inter", sans-serif; --nb-radius: 4px; }`
 
-No `!important` is needed. The [Styling guide](https://github.com/fpoller/nemvo-booking#styling) lists every token and class name.
+No `!important` is needed. The [Styling guide](https://github.com/nemvoit/nemvo-booking#styling) lists every token and class name.
 
 = How do I keep spam bots out? =
 
@@ -166,7 +166,7 @@ The honeypot, time-to-submit check, headless browser detection and rate limit ar
 
 = Which hooks are there? =
 
-The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking_cancelled` and `nemvo_booking_standalone_head`, and the filters `nemvo_booking_client_ip` (for reading the visitor's IP address behind a proxy), `nemvo_booking_capability` (who may manage bookings; `manage_options` by default) and `nemvo_booking_google_auth_url`. The [README on GitHub](https://github.com/fpoller/nemvo-booking#hooks) lists their arguments.
+The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking_cancelled` and `nemvo_booking_standalone_head`, and the filters `nemvo_booking_client_ip` (for reading the visitor's IP address behind a proxy), `nemvo_booking_capability` (who may manage bookings; `manage_options` by default) and `nemvo_booking_google_auth_url`. The [README on GitHub](https://github.com/nemvoit/nemvo-booking#hooks) lists their arguments.
 
 == Screenshots ==
 

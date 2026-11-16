@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Nemvo Booking
- * Plugin URI:        https://github.com/fpoller/nemvo-booking
+ * Plugin URI:        https://github.com/nemvoit/nemvo-booking
  * Description:       Meeting booking with Google Calendar availability, Google Meet links and calendar invitations.
  * Version:           1.2.2
  * Requires at least: 6.2
