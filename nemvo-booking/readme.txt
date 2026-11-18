@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling, google calendar, google meet
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -98,20 +98,20 @@ See Automattic's [Terms of Service](https://wordpress.com/tos/) and [Privacy Pol
 Cap is a proof-of-work CAPTCHA that you run yourself; it is off until you set it up under Bookings → Settings. When it is on:
 
 * The visitor's browser fetches a puzzle and redeems the solution. By default it does so through your site (REST API), and WordPress passes the requests on to your Cap server together with the visitor's IP address, so Cap can limit repeated requests. If you enter a public Cap address, the browser talks to your Cap server directly.
-* With "instrumentation challenges" on for the site key (Cap's default), your Cap server also sends a small script that the widget runs in a sandboxed frame in the visitor's browser to check that it is a real browser. Its result goes back to your Cap server only.
+* With "instrumentation challenges" on for the site key (Cap's default), your Cap server also sends a small script that the widget runs in a sandboxed frame in the visitor's browser to check that it is a real browser. The frame is isolated from your page (it can't read the page, its cookies or storage), and its result goes back to your Cap server only. Because of this isolation, Cap site keys that block automated clicks and typing, score behavior with blocking on, or block AI agents reject solves with `instr_isolated`; leave those options off for the key you use here.
 * When a booking is made, WordPress sends the widget's token and the secret key to your Cap server to verify it. "Test connection" and saving the settings send a test request the same way.
 
 The Cap server is run by you, not by a third party, so nothing is sent anywhere else.
 
 = trycap.dev (links in the Cap widget) =
 
-The visible Cap widget shows a small "Cap" credit link to https://trycap.dev, and a "Troubleshoot" link to Cap's documentation when the browser check fails. Nothing is loaded from trycap.dev; only a visitor who clicks a link opens it in a new tab, and the browser then sends trycap.dev the usual request data (IP address, browser and, for the documentation link, your site's address as referrer). The plugin turns off the widget option that would add the page address and referrer to the credit link. trycap.dev is run by the Cap project; see the [Cap repository](https://github.com/tiagozip/cap) for its terms.
+The visible Cap widget shows a small "Cap" credit link to https://trycap.dev, and, when the browser check fails, a "Troubleshoot" link to Cap's documentation at https://trycap.dev/guide/troubleshooting/instrumentation.html. Nothing is loaded from or sent to trycap.dev unless a visitor clicks one of these links. The link then opens in a new tab, and the browser sends trycap.dev only what any link click sends: the visitor's IP address, browser details and, as referrer, your site's address. The plugin turns off the widget options that would add more: the page address and referrer on the credit link, and the page address, title, referrer and browser and screen details on the Troubleshoot link. trycap.dev is run by the Cap project; see the [Cap repository](https://github.com/tiagozip/cap) for its terms.
 
 == Third-party code ==
 
 The plugin includes these unmodified files in `assets/vendor/cap/`, with their license texts:
 
-* **Cap widget** 0.1.58 (`@cap.js/widget`, `cap.min.js`), Apache License 2.0. Readable source: [widget/src at commit 91b45ac](https://github.com/tiagozip/cap/tree/91b45ace6dc4ef57100e5f0f748efaae6417d70a/widget/src) of tiagozip/cap, the "widget@0.1.58" release.
+* **Cap widget** 0.1.63 (`@cap.js/widget`, `cap.min.js`), Apache License 2.0. Readable source: [widget/src at commit 18a9750](https://github.com/tiagozip/cap/tree/18a975028e2de21acc9b3f99209439d3f09093e8/widget/src) of tiagozip/cap, the "widget@0.1.63" release.
 * **Cap WASM solver** 0.0.8 (`@cap.js/wasm`, `cap_wasm_bg.wasm`), Apache License 2.0. Rust source: [wasm/src/rust at commit 8ad83fb](https://github.com/tiagozip/cap/tree/8ad83fb50eaefb7f113ca1ec508ce242ed75033d/wasm/src/rust), the "wasm@0.0.8" release.
 * **HashWX** (`hashwx.wasm`, shipped in `@cap.js/wasm` 0.0.8), GNU LGPL 3.0. C source: [tevador/hashwx at commit 74b567a](https://github.com/tevador/hashwx/tree/74b567a31276a4c5d7cb232a5b7639467f49f961), compiled to WebAssembly by the Cap project.
 * **pako** 2.1.0 (`pako_inflate.min.js`), MIT and Zlib licenses. Source: [nodeca/pako 2.1.0](https://github.com/nodeca/pako/tree/2.1.0). Only loaded by browsers without `DecompressionStream`.
@@ -181,6 +181,11 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 
 == Changelog ==
 
+= 1.2.3 =
+* Updated the bundled Cap widget to 0.1.63. In browsers without WebAssembly it asks the Cap server for puzzles it can solve in JavaScript; this needs a Cap server version that offers them, and the plugin's relay passes the request on.
+* The Cap widget's "Troubleshoot" link is now a plain link to Cap's documentation: the plugin stops the widget from adding the page address and the visitor's browser details to it.
+* Cap's browser check keeps running isolated from your page, as before. Cap site keys that block automated clicks and typing, score behavior with blocking on, or block AI agents can't be used with the plugin.
+
 = 1.2.2 =
 * Booking pages are now stored as the post type `nemvo_booking_page` (was `nb_booking_page`). Existing booking pages are moved automatically when you update; their IDs stay the same, so blocks and shortcodes keep working.
 * Cancel and reschedule links now use `?nemvo_booking_cancel=` and `?nemvo_booking_reschedule=`. Links in emails sent before the update (`?nb_cancel=`, `?nb_reschedule=`) keep working.
@@ -200,6 +205,9 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 * First public release.
 
 == Upgrade Notice ==
+
+= 1.2.3 =
+Cap widget 0.1.63. Its Troubleshoot link no longer carries page or browser details.
 
 = 1.2.2 =
 Booking pages and booker links get new internal names; existing pages and links in emails already sent keep working. Saved secrets are encrypted on update.

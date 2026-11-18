@@ -6,12 +6,12 @@ How Nemvo Booking gets into the WordPress.org plugin directory, and how new vers
 
 - **WordPress.org account.** The account that submits becomes the plugin's owner. `Contributors:` in `nemvo-booking/readme.txt` must list WordPress.org usernames (currently `fpoller`).
 - **Two-factor authentication.** WordPress.org requires 2FA for accounts with commit access. Turn it on under *Edit profile → Account & Security*.
-- **Version.** Every change gets a new patch version, also while the plugin is in review (see *Later releases* for where the version lives). The current version is 1.2.2.
+- **Version.** Every change gets a new patch version, also while the plugin is in review (see *Later releases* for where the version lives). The current version is 1.2.3.
 - **Checks.** Build the zip and run the smoke test. The smoke test includes Plugin Check, the same tool the review team runs first:
 
   ```sh
   ./build.sh
-  ./smoke-test.sh dist/nemvo-booking-1.2.2.zip
+  ./smoke-test.sh dist/nemvo-booking-1.2.3.zip
   ```
 
   Optionally, paste `readme.txt` into the [readme validator](https://wordpress.org/plugins/developers/readme-validator/).
@@ -39,8 +39,8 @@ Reviewers often ask about the following. The answers are already in `readme.txt`
 | Topic | Where it's answered |
 |---|---|
 | Calls to external services (Google, Gravatar, Cap, trycap.dev) | *External services* section: every request, when it happens (including the daily WP-Cron check and uninstall) and what it sends, with links to the terms and privacy policies. Gravatar is only used when avatars are on under Settings → Discussion, also in wp-admin. |
-| Cap's instrumentation script | Sent by the site owner's own Cap server and run by the widget in a sandboxed frame; described under *External services*. |
-| Minified or compiled files (Cap widget, WASM, pako) | *Third-party code* section and `assets/vendor/cap/README.txt`: versions, exact upstream commits for the readable source (Cap widget 0.1.58, WASM 0.0.8 including HashWX), full license texts. |
+| Cap's instrumentation script | Sent by the site owner's own Cap server and run by the widget in a sandboxed frame with an opaque origin (`CAP_ISOLATE`, set in `Protection::enqueue_cap()`), so it can't read the page; described under *External services*. |
+| Minified or compiled files (Cap widget, WASM, pako) | *Third-party code* section and `assets/vendor/cap/README.txt`: versions, exact upstream commits for the readable source (Cap widget 0.1.63, WASM 0.0.8 including HashWX), full license texts. |
 | jsDelivr addresses in `cap.min.js` | Fallbacks inside the unmodified widget; never used, because the plugin sets `CAP_CUSTOM_WASM_URL`, `CAP_CUSTOM_HASHWX_URL` and `CAP_PAKO_URL` to the bundled files (`Protection::enqueue_cap()`). |
 | Licenses | MIT for the plugin. Apache 2.0 (Cap), LGPL 3.0 (HashWX) and MIT/Zlib (pako) for the bundled files, all GPL-compatible. |
 | "Google" in the name or tags | Google only appears in tags and descriptions, not in the plugin name or slug |
@@ -61,7 +61,7 @@ The release workflow (`.github/workflows/release.yml`) already contains a WordPr
 
 1. **Settings → Secrets and variables → Actions → Secrets:** add `SVN_USERNAME` (your WordPress.org username) and `SVN_PASSWORD` (the SVN password).
 2. **Settings → Secrets and variables → Actions → Variables:** add `WPORG_DEPLOY` with the value `true`.
-3. **Actions → Release:** open the run for the tag of the approved version (for example `v1.2.2`), or push that tag now, and choose **Re-run all jobs**.
+3. **Actions → Release:** open the run for the tag of the approved version (for example `v1.2.3`), or push that tag now, and choose **Re-run all jobs**.
 
 The job copies `nemvo-booking/` to `trunk/`, creates `tags/<version>` and uploads `.wordpress-org/` (icons, banners, screenshots) to `assets/`.
 
@@ -72,10 +72,10 @@ svn checkout https://plugins.svn.wordpress.org/nemvo-booking wporg && cd wporg
 rsync -a --delete ../nemvo-booking/ trunk/
 mkdir -p assets && cp ../.wordpress-org/* assets/
 svn add --force trunk assets
-svn cp trunk tags/1.2.2
+svn cp trunk tags/1.2.3
 svn propset svn:mime-type image/png assets/*.png
 svn propset svn:mime-type image/svg+xml assets/*.svg
-svn commit -m "Nemvo Booking 1.2.2" --username <wordpress.org username>
+svn commit -m "Nemvo Booking 1.2.3" --username <wordpress.org username>
 ```
 
 The listing at `https://wordpress.org/plugins/nemvo-booking/` updates within a few minutes. Search can take a few hours to pick it up.

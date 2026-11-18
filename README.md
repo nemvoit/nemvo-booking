@@ -208,8 +208,8 @@ The plugin sends no data to its author. It connects to:
 
 - **Google** (OAuth and the Calendar API), with your own OAuth client: to read when hosts are busy and which days are public holidays, and to create, move and cancel meetings with the booker's details.
 - **Gravatar**, only for hosts without a chosen photo and only when avatars are switched on under Settings → Discussion: on booking pages that show host photos (the visitor's browser loads the image) and in wp-admin's host lists (the admin's browser loads it). With avatars off, wp-admin shows a bundled placeholder.
-- **Your own Cap server**, if you switch Cap on. By default visitors' browsers reach it through WordPress, so it can stay on an internal network. Cap's instrumentation challenge runs a script sent by your Cap server in a sandboxed frame.
-- **trycap.dev**, only when a visitor clicks the "Cap" credit or "Troubleshoot" link in the visible Cap widget.
+- **Your own Cap server**, if you switch Cap on. By default visitors' browsers reach it through WordPress, so it can stay on an internal network. Cap's instrumentation challenge runs a script sent by your Cap server in a sandboxed frame that is isolated from the page (`CAP_ISOLATE`), so site keys that block automated interactions, score behavior with blocking on, or block AI agents can't be used (they answer `instr_isolated`).
+- **trycap.dev**, only when a visitor clicks the "Cap" credit or "Troubleshoot" link in the visible Cap widget. Both are plain links: the plugin stops the widget from adding page or browser details to them (`CAP_DISABLE_WIDGET_REF`, `data-cap-troubleshooting-url`).
 
 The details, with links to the services' terms, are in [readme.txt](nemvo-booking/readme.txt) under *External services*.
 
@@ -290,6 +290,13 @@ nemvo-booking/
 ```
 
 ## Changelog
+
+### 1.2.3
+
+- Bundled Cap widget updated to 0.1.63 (adds a JavaScript solver for browsers without WebAssembly). The WASM files and pako are unchanged.
+- The Cap relay passes the widget's `?wasm=0` on to the Cap server's challenge endpoint, so browsers without WebAssembly can get JavaScript-solvable puzzles from a Cap server that offers them (capd 4.0.15 still answers with WASM-only puzzles).
+- The widget's "Troubleshoot" link gets a fixed `data-cap-troubleshooting-url`, so it no longer carries the page address, title, referrer and browser details (visible and invisible mode).
+- `CAP_ISOLATE` is set, so the instrumentation frame keeps an opaque origin as with 0.1.58 (the widget now shares the page's origin by default). Site keys that block automated interactions, score behavior with blocking on, or block AI agents answer `instr_isolated`.
 
 ### 1.2.2
 

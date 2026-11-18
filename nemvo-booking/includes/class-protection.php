@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 class Protection {
 
 	/** Version of the Cap widget bundled in assets/vendor/cap. */
-	const CAP_VERSION = '0.1.58';
+	const CAP_VERSION = '0.1.63';
 
 	/** Cap relay requests per visitor IP and hour (each solve takes two: challenge and redeem). */
 	const CAP_RELAY_LIMIT = 60;
@@ -66,8 +66,9 @@ class Protection {
 					'methods'             => 'POST',
 					'callback'            => array( __CLASS__, 'relay_cap' ),
 					// Public: anonymous visitors' browsers fetch and redeem Cap puzzles here before they
-					// book. Only answers when Cap is enabled, takes no parameters (the JSON body is passed
-					// on to the site owner's Cap server as it is, up to 64 KB) and is rate-limited per IP.
+					// book. Only answers when Cap is enabled, takes no parameters except the widget's
+					// optional ?wasm=0 (the JSON body is passed on to the site owner's Cap server as it
+					// is, up to 64 KB) and is rate-limited per IP.
 					'permission_callback' => '__return_true',
 				)
 			);
@@ -92,8 +93,14 @@ class Protection {
 		if ( strlen( $body ) > 65536 ) {
 			return new \WP_REST_Response( array( 'error' => 'Too large.' ), 413 );
 		}
+		$url = self::cap_server_url( Settings::all(), $action );
+		// Browsers without WebAssembly ask for challenges they can solve in JavaScript.
+		$query = $request->get_query_params();
+		if ( 'challenge' === $action && isset( $query['wasm'] ) && '0' === $query['wasm'] ) {
+			$url = add_query_arg( 'wasm', '0', $url );
+		}
 		$response = wp_remote_post(
-			self::cap_server_url( Settings::all(), $action ),
+			$url,
 			array(
 				'timeout' => 10,
 				'headers' => array(
@@ -132,8 +139,10 @@ class Protection {
 
 	/**
 	 * Loads the bundled Cap widget. The globals point the widget at the bundled WASM solvers and
-	 * pako, so its built-in jsDelivr fallback URLs are never used, and stop it from adding the
-	 * page address and referrer to its "Cap" credit link.
+	 * pako, so its built-in jsDelivr fallback URLs are never used, stop it from adding the page
+	 * address and referrer to its "Cap" credit link, and keep the instrumentation frame isolated:
+	 * the script from the Cap server runs with an opaque origin and can't read or change the page,
+	 * its cookies or storage (CAP_ISOLATE; widget 0.1.58 always did this).
 	 */
 	public static function enqueue_cap() {
 		if ( ! self::cap_enabled() ) {
@@ -144,7 +153,7 @@ class Protection {
 		wp_add_inline_script(
 			'nemvo-booking-cap',
 			sprintf(
-				'window.CAP_CUSTOM_WASM_URL=%1$s;window.CAP_CUSTOM_HASHWX_URL=%2$s;window.CAP_PAKO_URL=%3$s;window.CAP_DISABLE_WIDGET_REF=true;',
+				'window.CAP_CUSTOM_WASM_URL=%1$s;window.CAP_CUSTOM_HASHWX_URL=%2$s;window.CAP_PAKO_URL=%3$s;window.CAP_DISABLE_WIDGET_REF=true;window.CAP_ISOLATE=true;',
 				wp_json_encode( $bundled . 'cap_wasm_bg.wasm' ),
 				wp_json_encode( $bundled . 'hashwx.wasm' ),
 				wp_json_encode( $bundled . 'pako_inflate.min.js' )

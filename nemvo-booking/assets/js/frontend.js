@@ -12,6 +12,12 @@
 		check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 	};
 
+	/*
+	 * Fixed address for the Cap widget's "Troubleshoot" link. Without it the widget appends the page
+	 * address, title, referrer and browser details to the link; with it the link carries nothing.
+	 */
+	var CAP_TROUBLESHOOTING_URL = 'https://trycap.dev/guide/troubleshooting/instrumentation.html';
+
 	function esc(value) {
 		return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
 			return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -464,7 +470,8 @@
 	};
 
 	Widget.prototype.capWidgetHtml = function () {
-		return '<cap-widget data-cap-api-endpoint="' + esc(this.cfg.protection.cap.endpoint) + '"></cap-widget>';
+		return '<cap-widget data-cap-api-endpoint="' + esc(this.cfg.protection.cap.endpoint) +
+			'" data-cap-troubleshooting-url="' + esc(CAP_TROUBLESHOOTING_URL) + '"></cap-widget>';
 	};
 
 	/* Visible Cap widget: remember the token once the proof-of-work is solved. */
@@ -510,7 +517,8 @@
 			return Promise.reject(new Error(this.t.capFailed));
 		}
 		var t = this.t;
-		return new window.Cap({ apiEndpoint: cap.endpoint }).solve().then(function (solution) {
+		var config = { apiEndpoint: cap.endpoint, 'data-cap-troubleshooting-url': CAP_TROUBLESHOOTING_URL };
+		return new window.Cap(config).solve().then(function (solution) {
 			if (!solution || !solution.token) {
 				throw new Error(t.capFailed);
 			}
