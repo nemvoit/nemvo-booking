@@ -16,9 +16,10 @@ class Install {
 
 	/**
 	 * Database version. 4 renamed the booking page post type from nb_booking_page to
-	 * nemvo_booking_page and encrypted the stored secrets.
+	 * nemvo_booking_page and encrypted the stored secrets. 5 added the accounts table (extra
+	 * Google accounts checked for conflicts); dbDelta() creates it, nothing else moves.
 	 */
-	const DB_VERSION = 4;
+	const DB_VERSION = 5;
 
 	/**
 	 * Activation: creates or upgrades the tables and schedules the daily job.
@@ -148,6 +149,7 @@ class Install {
 		$employees = Plugin::table( 'employees' );
 		$bookings  = Plugin::table( 'bookings' );
 		$log       = Plugin::table( 'log' );
+		$accounts  = Plugin::table( 'accounts' );
 
 		dbDelta(
 			"CREATE TABLE {$employees} (
@@ -220,6 +222,23 @@ class Install {
 			PRIMARY KEY  (id),
 			KEY created_at (created_at),
 			KEY booking_id (booking_id)
+			) {$charset};"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$accounts} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			employee_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			google_email varchar(191) NOT NULL DEFAULT '',
+			refresh_token text NULL,
+			access_token text NULL,
+			token_expires bigint(20) NOT NULL DEFAULT 0,
+			calendars longtext NULL,
+			busy_calendars longtext NULL,
+			last_error text NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY employee_id (employee_id)
 			) {$charset};"
 		);
 	}

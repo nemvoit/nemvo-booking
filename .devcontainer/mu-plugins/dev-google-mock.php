@@ -7,6 +7,9 @@
  * Fake calendars (Europe/Stockholm): everyone is busy 12:00–13:00 every day; Anna is also busy 09:00–10:00
  * and Erik 15:00–16:00, so a page with both only offers times when both are free.
  * 11 November is a fake public holiday (in both the Swedish and Norwegian mock calendars); 18 November only in Norway. A refresh token ending in "|revoked" simulates revoked access.
+ * Adding another Google account (no login hint) "signs in" as the address in the option
+ * nemvo_booking_mock_next_account (default private@example.com); addresses starting with
+ * "private" are also busy 14:00–15:00. The last consent request is kept in nemvo_booking_mock_last_auth.
  */
 
 if ( ! getenv( 'NEMVO_BOOKING_GOOGLE_MOCK' ) ) {
@@ -17,7 +20,9 @@ if ( ! getenv( 'NEMVO_BOOKING_GOOGLE_MOCK' ) ) {
 add_filter(
 	'nemvo_booking_google_auth_url',
 	function ( $url, $params ) {
-		return $params['redirect_uri'] . '&state=' . rawurlencode( $params['state'] ) . '&code=' . rawurlencode( 'mock:' . ( $params['login_hint'] ?? 'someone@example.com' ) );
+		update_option( 'nemvo_booking_mock_last_auth', $params, false );
+		$who = $params['login_hint'] ?? get_option( 'nemvo_booking_mock_next_account', 'private@example.com' );
+		return $params['redirect_uri'] . '&state=' . rawurlencode( $params['state'] ) . '&code=' . rawurlencode( 'mock:' . $who );
 	},
 	10,
 	2
@@ -89,6 +94,9 @@ add_filter(
 				}
 				if ( 0 === strpos( $email, 'erik@' ) ) {
 					$hours[] = array( 15, 16 );
+				}
+				if ( 0 === strpos( $email, 'private' ) ) {
+					$hours = array( array( 14, 15 ) );
 				}
 				for ( $d = $from->setTimezone( $tz )->setTime( 0, 0 ); $d < $to; $d = $d->modify( '+1 day' ) ) {
 					foreach ( $hours as $h ) {

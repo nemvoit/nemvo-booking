@@ -7,6 +7,7 @@
 
 namespace NemvoBooking\Admin;
 
+use NemvoBooking\Accounts;
 use NemvoBooking\Employees;
 use NemvoBooking\Google;
 use NemvoBooking\Pages;
@@ -126,14 +127,16 @@ class Admin {
 		}
 
 		$messages = array(
-			'saved'        => __( 'Saved.', 'nemvo-booking' ),
-			'created'      => __( 'Employee added. Now connect their Google Calendar below.', 'nemvo-booking' ),
-			'deleted'      => __( 'Deleted.', 'nemvo-booking' ),
-			'connected'    => __( 'Google Calendar connected.', 'nemvo-booking' ),
-			'disconnected' => __( 'Google Calendar disconnected.', 'nemvo-booking' ),
-			'refreshed'    => __( 'Calendar list refreshed.', 'nemvo-booking' ),
-			'link'         => __( 'A new connect link was created. Copy it and send it to the employee.', 'nemvo-booking' ),
-			'cancelled'    => __( 'The booking was cancelled and everyone has been notified.', 'nemvo-booking' ),
+			'saved'           => __( 'Saved.', 'nemvo-booking' ),
+			'created'         => __( 'Employee added. Now connect their Google Calendar below.', 'nemvo-booking' ),
+			'deleted'         => __( 'Deleted.', 'nemvo-booking' ),
+			'connected'       => __( 'Google Calendar connected.', 'nemvo-booking' ),
+			'disconnected'    => __( 'Google Calendar disconnected.', 'nemvo-booking' ),
+			'refreshed'       => __( 'Calendar list refreshed.', 'nemvo-booking' ),
+			'link'            => __( 'A new connect link was created. Copy it and send it to the employee.', 'nemvo-booking' ),
+			'account_added'   => __( 'Google account added. Busy times in its checked calendars now block bookings.', 'nemvo-booking' ),
+			'account_removed' => __( 'Google account removed.', 'nemvo-booking' ),
+			'cancelled'       => __( 'The booking was cancelled and everyone has been notified.', 'nemvo-booking' ),
 		);
 		if ( isset( $_GET['nemvo_booking_notice'], $messages[ $_GET['nemvo_booking_notice'] ] ) ) {
 			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $messages[ sanitize_key( $_GET['nemvo_booking_notice'] ) ] ) );
@@ -152,10 +155,16 @@ class Admin {
 			return;
 		}
 		foreach ( Employees::all() as $employee ) {
-			if ( ! $employee['last_error'] || ! Employees::is_connected( $employee ) ) {
+			if ( ! Employees::is_connected( $employee ) ) {
 				continue;
 			}
-			$pages = Employees::page_titles( $employee );
+			$broken = $employee['last_error'] ? array( $employee['name'] ) : array();
+			foreach ( Accounts::for_employee( $employee['id'] ) as $account ) {
+				if ( $account['last_error'] ) {
+					$broken[] = Accounts::label( $account, $employee );
+				}
+			}
+			$pages = $broken ? Employees::page_titles( $employee ) : array();
 			if ( ! $pages ) {
 				continue;
 			}
@@ -163,7 +172,7 @@ class Admin {
 				'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
 				esc_html(
 					/* translators: %s: employee name */
-					sprintf( __( 'Bookings: the Google Calendar connection for %s is not working.', 'nemvo-booking' ), $employee['name'] )
+					sprintf( __( 'Bookings: the Google Calendar connection for %s is not working.', 'nemvo-booking' ), implode( ', ', $broken ) )
 				),
 				esc_html(
 					/* translators: %s: booking page titles */

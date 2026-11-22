@@ -170,7 +170,7 @@ class Availability {
 		// Round to whole hours so the cache is reused between requests.
 		$from = $from - ( $from % HOUR_IN_SECONDS );
 		$to   = $to + ( HOUR_IN_SECONDS - $to % HOUR_IN_SECONDS );
-		$key  = 'nemvo_booking_fb_' . md5( $host['id'] . '|' . $from . '|' . $to . '|' . implode( ',', Employees::busy_calendars( $host ) ) );
+		$key  = 'nemvo_booking_fb_' . md5( $host['id'] . '|' . $from . '|' . $to . '|' . implode( ',', Employees::busy_calendars( $host ) ) . '|' . Accounts::signature( (int) $host['id'] ) );
 
 		$google = $fresh ? false : get_transient( $key );
 		if ( ! is_array( $google ) ) {

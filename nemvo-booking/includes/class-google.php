@@ -51,17 +51,20 @@ class Google {
 	/**
 	 * Google's consent screen URL for connecting an employee's calendar.
 	 *
-	 * @param array  $employee Employee.
+	 * @param array  $employee   Employee.
 	 * @param string $mode       'admin' (started from wp-admin) or 'link' (employee used a connect link).
 	 * @param string $link_token Connect link token, for mode 'link'.
+	 * @param bool   $extra      True to add another Google account that is only checked for
+	 *                           conflicts (free/busy and the calendar list, nothing else).
 	 * @return string URL.
 	 */
-	public static function auth_url( array $employee, string $mode, string $link_token = '' ): string {
+	public static function auth_url( array $employee, string $mode, string $link_token = '', bool $extra = false ): string {
 		$state = Crypto::sign(
 			array(
 				'e'   => (int) $employee['id'],
 				'm'   => $mode,
 				't'   => $link_token,
+				'x'   => $extra ? 1 : 0,
 				'exp' => time() + 30 * MINUTE_IN_SECONDS,
 			)
 		);
@@ -76,7 +79,12 @@ class Google {
 			'include_granted_scopes' => 'true',
 			'state'                  => $state,
 		);
-		if ( ! empty( $employee['email'] ) ) {
+		if ( $extra ) {
+			// Another account than the main one: let the person pick it, and ask for less.
+			$params['scope']  = Accounts::SCOPES;
+			$params['prompt'] = 'select_account consent';
+			unset( $params['include_granted_scopes'] );
+		} elseif ( ! empty( $employee['email'] ) ) {
 			$params['login_hint'] = $employee['email'];
 		}
 
@@ -87,17 +95,19 @@ class Google {
 	/**
 	 * Entry point for links sent to employees so they can connect without a WordPress login.
 	 * The token in the link is the credential; it is checked against the employee's current one.
+	 * Links with add=1 add another Google account, which needs the main one to be connected.
 	 */
 	public static function handle_connect_link() {
 		$id       = isset( $_GET['e'] ) ? absint( $_GET['e'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$token    = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$extra    = ! empty( $_GET['add'] ); // phpcs:ignore WordPress.Security.NonceVerification
 		$employee = Employees::get( $id );
 
-		if ( ! $employee || ! self::is_configured() || ! Employees::connect_token_valid( $employee, $token ) ) {
+		if ( ! $employee || ! self::is_configured() || ! Employees::connect_token_valid( $employee, $token ) || ( $extra && ! Employees::is_connected( $employee ) ) ) {
 			self::message_page( __( 'This link has expired', 'nemvo-booking' ), __( 'Please ask your administrator for a new link to connect your Google Calendar.', 'nemvo-booking' ), 403 );
 		}
 
-		wp_redirect( self::auth_url( $employee, 'link', $token ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		wp_redirect( self::auth_url( $employee, 'link', $token, $extra ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 		exit;
 	}
 
@@ -122,11 +132,17 @@ class Google {
 			self::message_page( __( 'This link has expired', 'nemvo-booking' ), __( 'Please ask your administrator for a new link to connect your Google Calendar.', 'nemvo-booking' ), 403 );
 		}
 
+		$extra = ! empty( $state['x'] );
+		if ( $extra && ! Employees::is_connected( $employee ) ) {
+			self::message_page( __( 'Connection failed', 'nemvo-booking' ), __( 'The request was invalid or has expired. Please try again.', 'nemvo-booking' ), 400 );
+		}
+
 		$error = '';
 		if ( isset( $_GET['error'] ) ) {
 			$error = sanitize_text_field( wp_unslash( $_GET['error'] ) );
 		} else {
-			$result = self::exchange_code( isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '', $employee );
+			$code   = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
+			$result = $extra ? self::add_account( $code, $employee ) : self::exchange_code( $code, $employee );
 			if ( is_wp_error( $result ) ) {
 				$error = $result->get_error_message();
 			}
@@ -139,7 +155,7 @@ class Google {
 
 		if ( $is_admin ) {
 			$url = admin_url( 'admin.php?page=nemvo-booking-employees&edit=' . $employee['id'] );
-			$url = add_query_arg( $error ? array( 'nemvo_booking_error' => rawurlencode( $error ) ) : array( 'nemvo_booking_notice' => 'connected' ), $url );
+			$url = add_query_arg( $error ? array( 'nemvo_booking_error' => rawurlencode( $error ) ) : array( 'nemvo_booking_notice' => $extra ? 'account_added' : 'connected' ), $url );
 			wp_safe_redirect( $url );
 			exit;
 		}
@@ -147,6 +163,9 @@ class Google {
 		if ( $error ) {
 			/* translators: %s: error message */
 			self::message_page( __( 'Connection failed', 'nemvo-booking' ), sprintf( __( 'Google returned an error: %s', 'nemvo-booking' ), $error ), 400 );
+		}
+		if ( $extra ) {
+			self::message_page( __( 'Google account added', 'nemvo-booking' ), __( 'Thank you! Busy times in this account now block bookings too. You can close this window.', 'nemvo-booking' ), 200 );
 		}
 		self::message_page( __( 'Google Calendar connected', 'nemvo-booking' ), __( 'Thank you! Your calendar is now connected and you can close this window.', 'nemvo-booking' ), 200 );
 	}
@@ -159,25 +178,9 @@ class Google {
 	 * @return true|\WP_Error
 	 */
 	private static function exchange_code( string $code, array $employee ) {
-		$response = wp_remote_post(
-			self::TOKEN_URL,
-			array(
-				'timeout' => 15,
-				'body'    => array(
-					'code'          => $code,
-					'client_id'     => Settings::get( 'google_client_id' ),
-					'client_secret' => Settings::get( 'google_client_secret' ),
-					'redirect_uri'  => self::redirect_uri(),
-					'grant_type'    => 'authorization_code',
-				),
-			)
-		);
-		$data     = self::decode( $response );
+		$data = self::tokens_from_code( $code );
 		if ( is_wp_error( $data ) ) {
 			return $data;
-		}
-		if ( empty( $data['refresh_token'] ) ) {
-			return new \WP_Error( 'no_refresh_token', __( 'Google did not return a refresh token. Remove the app under myaccount.google.com/permissions and connect again.', 'nemvo-booking' ) );
 		}
 
 		Employees::update(
@@ -208,9 +211,137 @@ class Google {
 	}
 
 	/**
+	 * Exchanges an authorization code for the tokens of another Google account of the employee,
+	 * stores them encrypted and reads that account's calendar list. Adding an account that is
+	 * already there gives it the new tokens; the employee's main account is refused.
+	 *
+	 * @param string $code     Authorization code from Google.
+	 * @param array  $employee Employee.
+	 * @return true|\WP_Error
+	 */
+	private static function add_account( string $code, array $employee ) {
+		$data = self::tokens_from_code( $code );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+		$tokens = array(
+			'refresh_token' => Crypto::encrypt( $data['refresh_token'] ),
+			'access_token'  => Crypto::encrypt( $data['access_token'] ?? '' ),
+			'token_expires' => time() + (int) ( $data['expires_in'] ?? 3600 ) - 60,
+			'last_error'    => '',
+		);
+
+		$id        = Accounts::create( (int) $employee['id'], $tokens );
+		$refreshed = Accounts::refresh_calendars( Accounts::get( $id ) );
+		if ( is_wp_error( $refreshed ) ) {
+			Accounts::delete( $id );
+			return $refreshed;
+		}
+		$account = Accounts::get( $id );
+
+		if ( 0 === strcasecmp( $account['google_email'], (string) $employee['google_email'] ) ) {
+			Accounts::delete( $id ); // Same grant as the main connection: nothing to revoke.
+			return new \WP_Error( 'same_account', __( 'This is the Google account the employee is already connected with. Sign in with another account.', 'nemvo-booking' ) );
+		}
+		foreach ( Accounts::for_employee( (int) $employee['id'] ) as $other ) {
+			if ( $other['id'] !== $id && 0 === strcasecmp( $other['google_email'], $account['google_email'] ) ) {
+				Accounts::update( $other['id'], $tokens );
+				Accounts::delete( $id );
+				$account = Accounts::get( $other['id'] );
+				break;
+			}
+		}
+
+		Employees::update(
+			(int) $employee['id'],
+			array(
+				'connect_token'   => '',
+				'connect_expires' => 0,
+			)
+		);
+		Log::info(
+			'google.account_added',
+			sprintf( 'Google account %1$s of %2$s is now checked for conflicts.', $account['google_email'], $employee['name'] ),
+			array( 'employee_id' => $employee['id'] )
+		);
+		return true;
+	}
+
+	/**
+	 * Exchanges an authorization code for tokens.
+	 *
+	 * @param string $code Authorization code from Google.
+	 * @return array|\WP_Error Google's answer, with a refresh token.
+	 */
+	private static function tokens_from_code( string $code ) {
+		$response = wp_remote_post(
+			self::TOKEN_URL,
+			array(
+				'timeout' => 15,
+				'body'    => array(
+					'code'          => $code,
+					'client_id'     => Settings::get( 'google_client_id' ),
+					'client_secret' => Settings::get( 'google_client_secret' ),
+					'redirect_uri'  => self::redirect_uri(),
+					'grant_type'    => 'authorization_code',
+				),
+			)
+		);
+		$data     = self::decode( $response );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+		if ( empty( $data['refresh_token'] ) ) {
+			return new \WP_Error( 'no_refresh_token', __( 'Google did not return a refresh token. Remove the app under myaccount.google.com/permissions and connect again.', 'nemvo-booking' ) );
+		}
+		return $data;
+	}
+
+	/**
+	 * Saves columns of the employee or extra account a token belongs to.
+	 *
+	 * @param array $connection Employee or account.
+	 * @param array $data       Column => value.
+	 */
+	private static function persist( array $connection, array $data ) {
+		if ( Accounts::is_account( $connection ) ) {
+			Accounts::update( (int) $connection['id'], $data );
+		} else {
+			Employees::update( (int) $connection['id'], $data );
+		}
+	}
+
+	/**
+	 * Records a Google problem for the employee or extra account.
+	 *
+	 * @param array     $connection Employee or account.
+	 * @param \WP_Error $error      Error from Google.
+	 */
+	private static function report_problem( array $connection, \WP_Error $error ) {
+		if ( Accounts::is_account( $connection ) ) {
+			Accounts::report_problem( $connection, $error );
+		} else {
+			Employees::report_problem( $connection, $error );
+		}
+	}
+
+	/**
+	 * Clears a recorded problem of the employee or extra account.
+	 *
+	 * @param array $connection Employee or account.
+	 */
+	private static function report_ok( array $connection ) {
+		if ( Accounts::is_account( $connection ) ) {
+			Accounts::report_ok( $connection );
+		} else {
+			Employees::report_ok( $connection );
+		}
+	}
+
+	/**
 	 * A valid access token, refreshed with the refresh token when it has expired.
 	 *
-	 * @param array $employee Employee.
+	 * @param array $employee Employee, or one of an employee's extra accounts.
 	 * @return string|\WP_Error
 	 */
 	public static function access_token( array $employee ) {
@@ -240,12 +371,12 @@ class Google {
 		);
 		$data     = self::decode( $response );
 		if ( is_wp_error( $data ) ) {
-			Employees::report_problem( $employee, $data );
+			self::report_problem( $employee, $data );
 			return $data;
 		}
 
-		Employees::update(
-			(int) $employee['id'],
+		self::persist(
+			$employee,
 			array(
 				'access_token'  => Crypto::encrypt( $data['access_token'] ),
 				'token_expires' => time() + (int) ( $data['expires_in'] ?? 3600 ) - 60,
@@ -255,9 +386,10 @@ class Google {
 	}
 
 	/**
-	 * Calls the Google Calendar API as the employee and records whether their connection works.
+	 * Calls the Google Calendar API as the employee (or one of their extra accounts) and records
+	 * whether the connection works.
 	 *
-	 * @param array      $employee Employee.
+	 * @param array      $employee Employee or account.
 	 * @param string     $method HTTP method.
 	 * @param string     $path   Path below the API base URL.
 	 * @param array      $query  Query parameters.
@@ -292,10 +424,10 @@ class Google {
 			$status = (int) ( $result->get_error_data()['status'] ?? 0 );
 			// A missing event (e.g. deleted by hand) says nothing about the connection.
 			if ( ! ( 'DELETE' === $method && in_array( $status, array( 404, 410 ), true ) ) ) {
-				Employees::report_problem( $employee, $result );
+				self::report_problem( $employee, $result );
 			}
 		} else {
-			Employees::report_ok( $employee );
+			self::report_ok( $employee );
 		}
 		return $result;
 	}
@@ -340,9 +472,9 @@ class Google {
 	}
 
 	/**
-	 * The employee's calendars.
+	 * The calendars of the employee or extra account.
 	 *
-	 * @param array $employee Employee.
+	 * @param array $employee Employee or account.
 	 * @return array|\WP_Error List of calendars with id, summary, primary and role.
 	 */
 	public static function calendar_list( array $employee ) {
@@ -363,8 +495,9 @@ class Google {
 	}
 
 	/**
-	 * Busy intervals across the employee's conflict calendars. Google's free/busy
-	 * only reports events marked "Busy", so free all-day events don't block.
+	 * Busy intervals across the employee's conflict calendars, in their main Google account and
+	 * every extra account. Google's free/busy only reports events marked "Busy", so free all-day
+	 * events don't block. If any account can't be read the employee counts as unavailable.
 	 *
 	 * @param array $employee Employee.
 	 * @param int   $from     Range start (Unix timestamp).
@@ -372,9 +505,32 @@ class Google {
 	 * @return array|\WP_Error List of [start_ts, end_ts].
 	 */
 	public static function free_busy( array $employee, int $from, int $to ) {
-		$calendars = Employees::busy_calendars( $employee );
-		$data      = self::request(
-			$employee,
+		$busy = self::busy_times( $employee, Employees::busy_calendars( $employee ), $from, $to );
+		if ( is_wp_error( $busy ) ) {
+			return $busy;
+		}
+		foreach ( Accounts::for_employee( (int) $employee['id'] ) as $account ) {
+			$more = self::busy_times( $account, Accounts::busy_calendars( $account ), $from, $to );
+			if ( is_wp_error( $more ) ) {
+				return new \WP_Error( $more->get_error_code(), $account['google_email'] . ': ' . $more->get_error_message(), $more->get_error_data() );
+			}
+			$busy = array_merge( $busy, $more );
+		}
+		return $busy;
+	}
+
+	/**
+	 * Busy intervals in some calendars of one Google account.
+	 *
+	 * @param array    $connection Employee or account.
+	 * @param string[] $calendars  Calendar IDs.
+	 * @param int      $from       Range start (Unix timestamp).
+	 * @param int      $to         Range end (Unix timestamp).
+	 * @return array|\WP_Error List of [start_ts, end_ts].
+	 */
+	private static function busy_times( array $connection, array $calendars, int $from, int $to ) {
+		$data = self::request(
+			$connection,
 			'POST',
 			'/freeBusy',
 			array(),
@@ -406,7 +562,7 @@ class Google {
 		}
 		if ( $failed ) {
 			$error = new \WP_Error( 'freebusy', 'Cannot read calendar(s): ' . implode( ', ', $failed ) . '. Check the calendars selected under Employees.', array( 'status' => 404 ) );
-			Employees::report_problem( $employee, $error );
+			self::report_problem( $connection, $error );
 			if ( count( $failed ) >= count( $calendars ) ) {
 				return $error;
 			}
@@ -541,9 +697,9 @@ class Google {
 	}
 
 	/**
-	 * Asks Google to revoke the employee's refresh token.
+	 * Asks Google to revoke the refresh token of the employee or extra account.
 	 *
-	 * @param array $employee Employee.
+	 * @param array $employee Employee or account.
 	 */
 	public static function revoke( array $employee ) {
 		$refresh = Crypto::decrypt( $employee['refresh_token'] );

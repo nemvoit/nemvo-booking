@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling, google calendar, google meet
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -32,6 +32,7 @@ Bookings live on your own site, with no booking service in between. The plugin o
 * Each host connects their own Google Calendar. An admin can connect it, or send the host a 7-day connect link. Hosts don't need a WordPress account.
 * Only events marked *Busy* block a time, so free all-day events don't get in the way.
 * Choose which calendars to check for conflicts and which calendar new meetings go into.
+* Hosts with more than one Google account (for example a personal Gmail next to a work account) can add the others too. Their busy times block bookings; meetings still go into the main account. Those accounts are only asked for free/busy information and their list of calendars.
 * Every meeting gets a Google Meet link.
 * If a host's Google access stops working, you get one email with a reconnect link, and a warning shows in wp-admin until it's fixed. Connections are also checked daily.
 
@@ -76,10 +77,11 @@ The plugin connects to the services below. It sends no data to its author.
 Needed for everything the plugin does: availability, meetings and Google Meet links. It uses an OAuth client that you create in your own Google Cloud project.
 
 * **Connecting a calendar:** a host (or an admin) is sent to Google's sign-in page (accounts.google.com). WordPress then exchanges the code from Google for tokens at oauth2.googleapis.com, sending the code, your Client ID and Client secret. The tokens are stored encrypted in your database. WordPress then reads the host's calendar list from www.googleapis.com.
-* **Showing free times:** when a booking page loads its calendar, WordPress asks Google's free/busy API when the hosts are busy, for the dates shown. Selected public holiday calendars are read the same way, through a connected host's account, at most once a day per country and year.
+* **Other Google accounts of a host:** adding one works the same way, but Google asks only for permission to see the account's free/busy information and its list of calendars (scopes `calendar.freebusy` and `calendar.calendarlist.readonly`). Its tokens are stored encrypted too. Nothing is ever written to those accounts.
+* **Showing free times:** when a booking page loads its calendar, WordPress asks Google's free/busy API when the hosts are busy, for the dates shown, in each host's main account and other accounts. Selected public holiday calendars are read the same way, through a connected host's account, at most once a day per country and year.
 * **Booking, rescheduling and cancelling:** WordPress creates, moves or deletes the event in the organizing host's calendar. This sends the meeting time, the booking page title, the booker's name and email, guest emails and the form answers to Google. When Google sends the invitations (the default), Google emails the booker, guests and other hosts.
 * **Daily check:** once a day, WordPress asks Google's free/busy API about the next hour for every connected host who is on a booking page, so a broken connection is noticed.
-* **Disconnecting:** when a host is disconnected or deleted, and when the plugin is deleted with "Delete all … when the plugin is deleted" ticked, WordPress asks Google (oauth2.googleapis.com/revoke) to revoke the host's token.
+* **Disconnecting:** when a host is disconnected or deleted, when one of a host's other accounts is removed, and when the plugin is deleted with "Delete all … when the plugin is deleted" ticked, WordPress asks Google (oauth2.googleapis.com/revoke) to revoke the token. A Google account that is still connected elsewhere on the site isn't revoked, since Google would end that connection too.
 * Access tokens are refreshed at oauth2.googleapis.com when they expire, with the stored refresh token and your client credentials.
 
 Google's [Terms of Service](https://policies.google.com/terms), [Privacy Policy](https://policies.google.com/privacy), [Google APIs Terms of Service](https://developers.google.com/terms) and [API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy) apply.
@@ -181,6 +183,10 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 
 == Changelog ==
 
+= 1.2.4 =
+* New: hosts can add other Google accounts, for example a personal Gmail next to a work account. Busy times in their checked calendars block bookings; meetings still go into the main account. Add them under Bookings → Employees, or send the host a link. These accounts are only asked for free/busy information and their list of calendars.
+* If one of those accounts stops working, the host shows no free times until it is fixed, and you get the same email and wp-admin warning as for the main connection.
+
 = 1.2.3 =
 * Updated the bundled Cap widget to 0.1.63. In browsers without WebAssembly it asks the Cap server for puzzles it can solve in JavaScript; this needs a Cap server version that offers them, and the plugin's relay passes the request on.
 * The Cap widget's "Troubleshoot" link is now a plain link to Cap's documentation: the plugin stops the widget from adding the page address and the visitor's browser details to it.
@@ -205,6 +211,9 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 * First public release.
 
 == Upgrade Notice ==
+
+= 1.2.4 =
+Check other Google accounts of a host for conflicts. Adds a database table on update.
 
 = 1.2.3 =
 Cap widget 0.1.63. Its Troubleshoot link no longer carries page or browser details.

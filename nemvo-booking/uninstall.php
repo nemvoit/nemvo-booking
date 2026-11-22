@@ -23,10 +23,14 @@ function nemvo_booking_uninstall_site() {
 		return;
 	}
 
-	$employees = $wpdb->prefix . 'nemvo_booking_employees';
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the plugin's own table, read once while uninstalling.
-	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $employees ) ) ) === $employees ) {
-		foreach ( $wpdb->get_col( $wpdb->prepare( "SELECT refresh_token FROM %i WHERE refresh_token <> ''", $employees ) ) as $nemvo_booking_token ) {
+	// Employees' main accounts and their extra accounts (since 1.2.4).
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the plugin's own tables, read once while uninstalling.
+	foreach ( array( 'employees', 'accounts' ) as $nemvo_booking_table ) {
+		$nemvo_booking_table = $wpdb->prefix . 'nemvo_booking_' . $nemvo_booking_table;
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $nemvo_booking_table ) ) ) !== $nemvo_booking_table ) {
+			continue;
+		}
+		foreach ( $wpdb->get_col( $wpdb->prepare( "SELECT refresh_token FROM %i WHERE refresh_token <> ''", $nemvo_booking_table ) ) as $nemvo_booking_token ) {
 			$nemvo_booking_token = NemvoBooking\Crypto::decrypt( $nemvo_booking_token );
 			if ( '' !== $nemvo_booking_token ) {
 				wp_remote_post(
@@ -39,9 +43,9 @@ function nemvo_booking_uninstall_site() {
 			}
 		}
 	}
-	// phpcs:enable
+	// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-	foreach ( array( 'employees', 'bookings', 'log' ) as $nemvo_booking_table ) {
+	foreach ( array( 'employees', 'accounts', 'bookings', 'log' ) as $nemvo_booking_table ) {
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . 'nemvo_booking_' . $nemvo_booking_table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- removing the plugin's own tables on uninstall.
 	}
 

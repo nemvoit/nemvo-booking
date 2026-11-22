@@ -131,12 +131,15 @@ class Employees {
 	}
 
 	/**
-	 * Revokes the Google access and forgets the tokens.
+	 * Revokes the Google access (unless the same Google account is still connected elsewhere on
+	 * the site) and forgets the tokens. The employee's extra accounts stay.
 	 *
 	 * @param array $employee Employee.
 	 */
 	public static function disconnect( array $employee ) {
-		Google::revoke( $employee );
+		if ( ! Accounts::used_elsewhere( (string) $employee['google_email'], (int) $employee['id'] ) ) {
+			Google::revoke( $employee );
+		}
 		self::update(
 			$employee['id'],
 			array(
@@ -223,22 +226,43 @@ class Employees {
 	 * Creates a link the employee can open to connect their own Google account. Valid for 7 days.
 	 *
 	 * @param array $employee Employee.
+	 * @param bool  $extra    True for a link that adds another Google account, checked for conflicts only.
+	 * @param bool  $fresh    False to reuse a current link that is valid for at least another day
+	 *                        (alerts do, so one alert doesn't break the link in another).
 	 * @return string URL.
 	 */
-	public static function connect_link( array $employee ): string {
-		$token = wp_generate_password( 32, false );
-		self::update(
-			$employee['id'],
-			array(
-				'connect_token'   => $token,
-				'connect_expires' => time() + 7 * DAY_IN_SECONDS,
-			)
-		);
+	public static function connect_link( array $employee, bool $extra = false, bool $fresh = true ): string {
+		$token = (string) $employee['connect_token'];
+		if ( $fresh || '' === $token || (int) $employee['connect_expires'] < time() + DAY_IN_SECONDS ) {
+			$token = wp_generate_password( 32, false );
+			self::update(
+				$employee['id'],
+				array(
+					'connect_token'   => $token,
+					'connect_expires' => time() + 7 * DAY_IN_SECONDS,
+				)
+			);
+		}
+		return self::link_url( $employee, $token, $extra );
+	}
+
+	/**
+	 * The address of a connect link.
+	 *
+	 * @param array  $employee Employee.
+	 * @param string $token    Connect token.
+	 * @param bool   $extra    True for a link that adds another Google account.
+	 * @return string URL.
+	 */
+	public static function link_url( array $employee, string $token, bool $extra = false ): string {
 		return add_query_arg(
-			array(
-				'action' => 'nemvo_booking_connect',
-				'e'      => $employee['id'],
-				't'      => $token,
+			array_filter(
+				array(
+					'action' => 'nemvo_booking_connect',
+					'e'      => $employee['id'],
+					't'      => $token,
+					'add'    => $extra ? 1 : 0,
+				)
 			),
 			admin_url( 'admin-post.php' )
 		);
@@ -320,22 +344,24 @@ class Employees {
 	/**
 	 * Tells the admin (and the employee) how to fix a broken connection.
 	 *
-	 * @param array  $employee Employee.
-	 * @param string $error Error message from Google.
+	 * @param array      $employee Employee.
+	 * @param string     $error    Error message from Google.
+	 * @param array|null $account  The extra account that broke, or null for the main connection.
 	 */
-	private static function send_alert( array $employee, string $error ) {
+	public static function send_alert( array $employee, string $error, ?array $account = null ) {
 		$pages   = self::page_titles( $employee );
-		$link    = self::connect_link( $employee );
+		$link    = self::connect_link( $employee, null !== $account, false );
+		$who     = $account ? Accounts::label( $account, $employee ) : $employee['name'];
 		$subject = sprintf(
 			/* translators: 1: site name, 2: employee name */
 			__( '[%1$s] Google Calendar connection for %2$s stopped working', 'nemvo-booking' ),
 			get_bloginfo( 'name' ),
-			$employee['name']
+			$who
 		);
 		$html = '<p>' . sprintf(
 			/* translators: %s: employee name */
 			esc_html__( 'The Google Calendar connection for %s has stopped working.', 'nemvo-booking' ),
-			'<strong>' . esc_html( $employee['name'] ) . '</strong>'
+			'<strong>' . esc_html( $who ) . '</strong>'
 		) . '</p>';
 		if ( $pages ) {
 			$html .= '<p>' . esc_html__( 'These booking pages show no available times until it is fixed:', 'nemvo-booking' ) . ' <strong>' . esc_html( implode( ', ', $pages ) ) . '</strong></p>';

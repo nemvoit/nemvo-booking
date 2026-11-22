@@ -7,6 +7,7 @@
 
 namespace NemvoBooking\Admin;
 
+use NemvoBooking\Accounts;
 use NemvoBooking\Employees;
 use NemvoBooking\Google;
 use NemvoBooking\Log;
@@ -26,7 +27,7 @@ class Employees_Page {
 	 * Hooks in the admin-post handlers.
 	 */
 	public static function init() {
-		foreach ( array( 'save', 'delete', 'connect', 'disconnect', 'link', 'refresh' ) as $action ) {
+		foreach ( array( 'save', 'delete', 'connect', 'disconnect', 'link', 'refresh', 'account_add', 'account_link', 'account_refresh', 'account_remove' ) as $action ) {
 			add_action( 'admin_post_nemvo_booking_employee_' . $action, array( __CLASS__, 'handle_' . $action ) );
 		}
 	}
@@ -34,12 +35,28 @@ class Employees_Page {
 	/**
 	 * URL of an admin-post action for an employee, with a nonce.
 	 *
-	 * @param string $action Action name.
-	 * @param int    $id     Employee ID.
+	 * @param string $action  Action name.
+	 * @param int    $id      Employee ID.
+	 * @param int    $account Extra account ID, for the account_* actions.
 	 * @return string
 	 */
-	private static function action_url( string $action, int $id ): string {
-		return wp_nonce_url( admin_url( 'admin-post.php?action=nemvo_booking_employee_' . $action . '&id=' . $id ), 'nemvo_booking_employee_' . $action );
+	private static function action_url( string $action, int $id, int $account = 0 ): string {
+		$url = admin_url( 'admin-post.php?action=nemvo_booking_employee_' . $action . '&id=' . $id . ( $account ? '&account=' . $account : '' ) );
+		return wp_nonce_url( $url, 'nemvo_booking_employee_' . $action );
+	}
+
+	/**
+	 * The extra account named in the request, which must belong to the employee, or a 404 page.
+	 *
+	 * @param array $employee Employee.
+	 * @return array Account.
+	 */
+	private static function account_or_die( array $employee ): array {
+		$account = Accounts::get( isset( $_REQUEST['account'] ) ? absint( $_REQUEST['account'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! $account || $account['employee_id'] !== $employee['id'] ) {
+			wp_die( esc_html__( 'Google account not found.', 'nemvo-booking' ), 404 );
+		}
+		return $account;
 	}
 
 	/**
@@ -148,7 +165,18 @@ class Employees_Page {
 			echo '<span class="nb-badge nb-badge--error">' . esc_html__( 'Error', 'nemvo-booking' ) . '</span> <span class="description">' . esc_html( $employee['last_error'] ) . '</span>';
 			return;
 		}
+		$accounts = Accounts::for_employee( $employee['id'] );
+		foreach ( $accounts as $account ) {
+			if ( $account['last_error'] ) {
+				echo '<span class="nb-badge nb-badge--error">' . esc_html__( 'Error', 'nemvo-booking' ) . '</span> <span class="description">' . esc_html( $account['google_email'] . ': ' . $account['last_error'] ) . '</span>';
+				return;
+			}
+		}
 		echo '<span class="nb-badge nb-badge--confirmed">' . esc_html__( 'Connected', 'nemvo-booking' ) . '</span> <span class="description">' . esc_html( $employee['google_email'] ) . '</span>';
+		if ( $accounts ) {
+			/* translators: %d: number of other Google accounts */
+			echo '<br><span class="description">' . esc_html( sprintf( _n( '+ %d other Google account checked for conflicts', '+ %d other Google accounts checked for conflicts', count( $accounts ), 'nemvo-booking' ), count( $accounts ) ) ) . '</span>';
+		}
 	}
 
 	/**
@@ -160,14 +188,8 @@ class Employees_Page {
 		$connected = Employees::is_connected( $employee );
 		$link      = '';
 		if ( $employee['connect_token'] && (int) $employee['connect_expires'] > time() ) {
-			$link = add_query_arg(
-				array(
-					'action' => 'nemvo_booking_connect',
-					'e'      => $employee['id'],
-					't'      => $employee['connect_token'],
-				),
-				admin_url( 'admin-post.php' )
-			);
+			// Once connected, the employee's link adds another Google account instead.
+			$link = Employees::link_url( $employee, $employee['connect_token'], $connected );
 		}
 		$usage = self::usage()[ $employee['id'] ] ?? array();
 		?>
@@ -254,6 +276,8 @@ class Employees_Page {
 							<?php endforeach; ?>
 							</tbody>
 						</table>
+
+						<?php self::render_accounts( $employee, $link ); ?>
 					<?php else : ?>
 						<p><?php esc_html_e( 'Not connected yet. There are two ways to connect:', 'nemvo-booking' ); ?></p>
 						<ol>
@@ -286,6 +310,68 @@ class Employees_Page {
 				<?php submit_button( __( 'Save employee', 'nemvo-booking' ) ); ?>
 			</form>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Renders the employee's other Google accounts, whose calendars are only checked for conflicts.
+	 *
+	 * @param array  $employee Employee (connected).
+	 * @param string $link     Current link for adding an account, or ''.
+	 */
+	private static function render_accounts( array $employee, string $link ) {
+		$accounts = Accounts::for_employee( $employee['id'] );
+		?>
+		<h3><?php esc_html_e( 'Other Google accounts', 'nemvo-booking' ); ?></h3>
+		<p class="description"><?php esc_html_e( 'Busy times in other Google accounts of this employee – for example a personal Gmail next to a work account – can block bookings too. These accounts are only asked for free/busy information and their list of calendars; meetings are always added with the account above. Accounts outside your Google Workspace need the Google Cloud app\'s audience set to External (see Settings).', 'nemvo-booking' ); ?></p>
+		<?php foreach ( $accounts as $account ) : ?>
+			<table class="widefat striped nb-table nb-calendars" data-account="<?php echo esc_attr( $account['id'] ); ?>">
+				<thead>
+					<tr>
+						<th>
+							<?php echo esc_html( $account['google_email'] ); ?>
+							<?php if ( $account['last_error'] ) : ?>
+								<span class="nb-badge nb-badge--error"><?php esc_html_e( 'Error', 'nemvo-booking' ); ?></span> <span class="description"><?php echo esc_html( $account['last_error'] ); ?></span>
+							<?php endif; ?>
+						</th>
+						<th><?php esc_html_e( 'Check for conflicts', 'nemvo-booking' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php
+				$busy = Accounts::busy_calendars( $account );
+				foreach ( $account['calendars'] as $cal ) :
+					?>
+					<tr>
+						<td><?php echo esc_html( $cal['summary'] ); ?><?php echo $cal['primary'] ? ' <span class="description">(' . esc_html__( 'primary', 'nemvo-booking' ) . ')</span>' : ''; ?></td>
+						<td><input type="checkbox" name="account_busy[<?php echo esc_attr( $account['id'] ); ?>][]" value="<?php echo esc_attr( $cal['id'] ); ?>" <?php checked( in_array( $cal['id'], $busy, true ) || ( $cal['primary'] && in_array( 'primary', $busy, true ) ) ); ?>></td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p>
+				<a class="button" href="<?php echo esc_url( self::action_url( 'account_refresh', $employee['id'], $account['id'] ) ); ?>"><?php esc_html_e( 'Refresh calendar list', 'nemvo-booking' ); ?></a>
+				<a class="button-link-delete" data-confirm href="<?php echo esc_url( self::action_url( 'account_remove', $employee['id'], $account['id'] ) ); ?>"><?php esc_html_e( 'Remove', 'nemvo-booking' ); ?></a>
+			</p>
+		<?php endforeach; ?>
+		<p>
+			<a class="button" href="<?php echo esc_url( self::action_url( 'account_add', $employee['id'] ) ); ?>"><?php esc_html_e( 'Add another Google account', 'nemvo-booking' ); ?></a>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Or send the employee a link: they open it, sign in with the other account and click Allow. The link works for 7 days.', 'nemvo-booking' ); ?>
+		</p>
+		<?php if ( $link ) : ?>
+			<?php echo Admin::copy_field( $link, 'large-text' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<span class="description">
+				<?php
+				/* translators: %s: expiry date */
+				printf( esc_html__( 'Valid until %s.', 'nemvo-booking' ), esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $employee['connect_expires'] ) ) );
+				?>
+			</span>
+			<a href="<?php echo esc_url( self::action_url( 'account_link', $employee['id'] ) ); ?>"><?php esc_html_e( 'Create a new link', 'nemvo-booking' ); ?></a>
+		<?php else : ?>
+			<a class="button" href="<?php echo esc_url( self::action_url( 'account_link', $employee['id'] ) ); ?>"><?php esc_html_e( 'Create link', 'nemvo-booking' ); ?></a>
+		<?php endif; ?>
 		<?php
 	}
 
@@ -341,6 +427,12 @@ class Employees_Page {
 			if ( ! $data['busy_calendars'] ) {
 				$data['busy_calendars'] = array( 'primary' );
 			}
+			$posted = wp_unslash( (array) ( $_POST['account_busy'] ?? array() ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value is sanitized below.
+			foreach ( Accounts::for_employee( $id ) as $account ) {
+				$checked = array_map( 'sanitize_text_field', (array) ( $posted[ $account['id'] ] ?? array() ) );
+				$busy    = array_values( array_intersect( $checked, wp_list_pluck( $account['calendars'], 'id' ) ) );
+				Accounts::update( $account['id'], array( 'busy_calendars' => $busy ? $busy : array( 'primary' ) ) );
+			}
 		}
 		// phpcs:enable
 		Employees::update( $id, $data );
@@ -359,7 +451,8 @@ class Employees_Page {
 	public static function handle_delete() {
 		Admin::check( 'nemvo_booking_employee_delete' );
 		$employee = self::employee_or_die();
-		if ( Employees::is_connected( $employee ) ) {
+		Accounts::remove_all( $employee['id'] );
+		if ( Employees::is_connected( $employee ) && ! Accounts::used_elsewhere( (string) $employee['google_email'], $employee['id'] ) ) {
 			Google::revoke( $employee );
 		}
 		Employees::delete( $employee['id'] );
@@ -420,5 +513,64 @@ class Employees_Page {
 		$result   = Employees::refresh_calendars( $employee );
 		$args     = is_wp_error( $result ) ? array( 'nemvo_booking_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nemvo_booking_notice' => 'refreshed' );
 		Admin::redirect( self::PAGE, array( 'edit' => $employee['id'] ) + $args );
+	}
+
+	/**
+	 * Admin-post handler: sends the admin to Google to add another account of the employee.
+	 */
+	public static function handle_account_add() {
+		Admin::check( 'nemvo_booking_employee_account_add' );
+		$employee = self::employee_or_die();
+		if ( ! Employees::is_connected( $employee ) ) {
+			Admin::redirect( self::PAGE, array( 'edit' => $employee['id'] ) );
+		}
+		wp_redirect( Google::auth_url( $employee, 'admin', '', true ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		exit;
+	}
+
+	/**
+	 * Admin-post handler: creates a link the employee can use to add another Google account.
+	 */
+	public static function handle_account_link() {
+		Admin::check( 'nemvo_booking_employee_account_link' );
+		$employee = self::employee_or_die();
+		Employees::connect_link( $employee, true );
+		Log::info( 'employee.connect_link', sprintf( 'A link to add another Google account was created for %s.', $employee['name'] ), array( 'employee_id' => $employee['id'] ) );
+		Admin::redirect(
+			self::PAGE,
+			array(
+				'edit'                 => $employee['id'],
+				'nemvo_booking_notice' => 'link',
+			)
+		);
+	}
+
+	/**
+	 * Admin-post handler: reads an extra account's calendar list from Google again.
+	 */
+	public static function handle_account_refresh() {
+		Admin::check( 'nemvo_booking_employee_account_refresh' );
+		$employee = self::employee_or_die();
+		$result   = Accounts::refresh_calendars( self::account_or_die( $employee ) );
+		$args     = is_wp_error( $result ) ? array( 'nemvo_booking_error' => rawurlencode( $result->get_error_message() ) ) : array( 'nemvo_booking_notice' => 'refreshed' );
+		Admin::redirect( self::PAGE, array( 'edit' => $employee['id'] ) + $args );
+	}
+
+	/**
+	 * Admin-post handler: removes an extra account and revokes the site's access to it.
+	 */
+	public static function handle_account_remove() {
+		Admin::check( 'nemvo_booking_employee_account_remove' );
+		$employee = self::employee_or_die();
+		$account  = self::account_or_die( $employee );
+		Accounts::remove( $account );
+		Log::info( 'google.account_removed', sprintf( 'Google account %1$s of %2$s was removed.', $account['google_email'], $employee['name'] ), array( 'employee_id' => $employee['id'] ) );
+		Admin::redirect(
+			self::PAGE,
+			array(
+				'edit'                 => $employee['id'],
+				'nemvo_booking_notice' => 'account_removed',
+			)
+		);
 	}
 }

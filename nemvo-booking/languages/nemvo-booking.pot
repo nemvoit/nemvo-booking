@@ -2,14 +2,14 @@
 # This file is distributed under the MIT.
 msgid ""
 msgstr ""
-"Project-Id-Version: Nemvo Booking 1.2.2\n"
+"Project-Id-Version: Nemvo Booking 1.2.4\n"
 "Report-Msgid-Bugs-To: https://github.com/nemvoit/nemvo-booking/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T12:41:17+00:00\n"
+"POT-Creation-Date: 2026-11-22T10:31:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: nemvo-booking\n"
@@ -40,8 +40,8 @@ msgstr ""
 msgid "https://nemvo.eu"
 msgstr ""
 
-#: includes/admin/class-admin.php:58
 #: includes/admin/class-admin.php:59
+#: includes/admin/class-admin.php:60
 #: includes/admin/class-bookings-page.php:72
 #: includes/class-privacy.php:122
 #: includes/class-privacy.php:136
@@ -49,148 +49,158 @@ msgstr ""
 msgid "Bookings"
 msgstr ""
 
-#: includes/admin/class-admin.php:66
-#: includes/admin/class-employees-page.php:87
+#: includes/admin/class-admin.php:67
+#: includes/admin/class-employees-page.php:104
 msgid "Employees"
 msgstr ""
 
-#: includes/admin/class-admin.php:67
+#: includes/admin/class-admin.php:68
 #: includes/admin/class-log-page.php:39
 msgid "History log"
 msgstr ""
 
-#: includes/admin/class-admin.php:68
+#: includes/admin/class-admin.php:69
 #: includes/admin/class-settings-page.php:210
 msgid "Booking settings"
 msgstr ""
 
-#: includes/admin/class-admin.php:68
+#: includes/admin/class-admin.php:69
 #: includes/admin/class-page-editor.php:250
 #: includes/admin/class-page-editor.php:463
 msgid "Settings"
 msgstr ""
 
-#: includes/admin/class-admin.php:98
+#: includes/admin/class-admin.php:99
 msgid "Copied!"
 msgstr ""
 
-#: includes/admin/class-admin.php:99
+#: includes/admin/class-admin.php:100
 msgid "Are you sure?"
 msgstr ""
 
-#: includes/admin/class-admin.php:100
+#: includes/admin/class-admin.php:101
 msgid "Replace this email with the default text?"
 msgstr ""
 
-#: includes/admin/class-admin.php:101
+#: includes/admin/class-admin.php:102
 msgid "Choose a photo"
 msgstr ""
 
-#: includes/admin/class-admin.php:102
+#: includes/admin/class-admin.php:103
 msgid "Use this photo"
 msgstr ""
 
-#: includes/admin/class-admin.php:103
+#: includes/admin/class-admin.php:104
 msgid "Testing…"
 msgstr ""
 
-#: includes/admin/class-admin.php:104
+#: includes/admin/class-admin.php:105
 msgid "The test could not be run. Reload the page and try again."
 msgstr ""
 
-#: includes/admin/class-admin.php:122
+#: includes/admin/class-admin.php:123
 msgid "Google is not connected yet, so nothing can be booked."
 msgstr ""
 
-#: includes/admin/class-admin.php:124
+#: includes/admin/class-admin.php:125
 msgid "Follow the setup guide in Settings →"
 msgstr ""
 
-#: includes/admin/class-admin.php:129
+#: includes/admin/class-admin.php:130
 msgid "Saved."
 msgstr ""
 
-#: includes/admin/class-admin.php:130
+#: includes/admin/class-admin.php:131
 msgid "Employee added. Now connect their Google Calendar below."
 msgstr ""
 
-#: includes/admin/class-admin.php:131
+#: includes/admin/class-admin.php:132
 msgid "Deleted."
 msgstr ""
 
-#: includes/admin/class-admin.php:132
+#: includes/admin/class-admin.php:133
 msgid "Google Calendar connected."
 msgstr ""
 
-#: includes/admin/class-admin.php:133
+#: includes/admin/class-admin.php:134
 msgid "Google Calendar disconnected."
 msgstr ""
 
-#: includes/admin/class-admin.php:134
+#: includes/admin/class-admin.php:135
 msgid "Calendar list refreshed."
 msgstr ""
 
-#: includes/admin/class-admin.php:135
+#: includes/admin/class-admin.php:136
 msgid "A new connect link was created. Copy it and send it to the employee."
 msgstr ""
 
-#: includes/admin/class-admin.php:136
+#: includes/admin/class-admin.php:137
+msgid "Google account added. Busy times in its checked calendars now block bookings."
+msgstr ""
+
+#: includes/admin/class-admin.php:138
+msgid "Google account removed."
+msgstr ""
+
+#: includes/admin/class-admin.php:139
 msgid "The booking was cancelled and everyone has been notified."
 msgstr ""
 
 #. translators: %s: employee name
-#: includes/admin/class-admin.php:166
+#: includes/admin/class-admin.php:175
 #, php-format
 msgid "Bookings: the Google Calendar connection for %s is not working."
 msgstr ""
 
 #. translators: %s: booking page titles
-#: includes/admin/class-admin.php:170
+#: includes/admin/class-admin.php:179
 #, php-format
 msgid "These booking pages show no available times: %s."
 msgstr ""
 
-#: includes/admin/class-admin.php:173
+#: includes/admin/class-admin.php:182
 msgid "Reconnect →"
 msgstr ""
 
-#: includes/admin/class-admin.php:185
+#: includes/admin/class-admin.php:194
 #: includes/admin/class-settings-page.php:149
-#: includes/class-google.php:119
+#: includes/class-google.php:129
 msgid "You are not allowed to do this."
 msgstr ""
 
-#: includes/admin/class-admin.php:213
+#: includes/admin/class-admin.php:222
 msgid "Copy"
 msgstr ""
 
-#: includes/admin/class-admin.php:225
+#: includes/admin/class-admin.php:234
 msgid "Confirmed"
 msgstr ""
 
-#: includes/admin/class-admin.php:226
+#: includes/admin/class-admin.php:235
 #: includes/admin/class-bookings-page.php:190
 msgid "Cancelled"
 msgstr ""
 
-#: includes/admin/class-admin.php:227
+#: includes/admin/class-admin.php:236
 msgid "Failed"
 msgstr ""
 
-#: includes/admin/class-admin.php:228
+#: includes/admin/class-admin.php:237
 msgid "Pending"
 msgstr ""
 
-#: includes/admin/class-admin.php:229
+#: includes/admin/class-admin.php:238
 msgid "Info"
 msgstr ""
 
-#: includes/admin/class-admin.php:230
+#: includes/admin/class-admin.php:239
 msgid "Warning"
 msgstr ""
 
-#: includes/admin/class-admin.php:231
-#: includes/admin/class-employees-page.php:148
+#: includes/admin/class-admin.php:240
+#: includes/admin/class-employees-page.php:165
+#: includes/admin/class-employees-page.php:171
+#: includes/admin/class-employees-page.php:334
 msgid "Error"
 msgstr ""
 
@@ -263,7 +273,7 @@ msgid "Meet"
 msgstr ""
 
 #: includes/admin/class-bookings-page.php:142
-#: includes/admin/class-employees-page.php:184
+#: includes/admin/class-employees-page.php:206
 msgid "Details"
 msgstr ""
 
@@ -371,191 +381,229 @@ msgstr ""
 msgid "Booking not found."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:53
+#: includes/admin/class-employees-page.php:57
+msgid "Google account not found."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:70
 msgid "Employee not found."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:88
+#: includes/admin/class-employees-page.php:105
 msgid "Employees are the people visitors can book meetings with. Each one connects their Google Calendar, so busy times are blocked automatically and new meetings (with a Google Meet link) land directly in their calendar. Employees don't need a WordPress account."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:91
-#: includes/admin/class-employees-page.php:97
+#: includes/admin/class-employees-page.php:108
+#: includes/admin/class-employees-page.php:114
 msgid "Add employee"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:95
-#: includes/admin/class-employees-page.php:187
+#: includes/admin/class-employees-page.php:112
+#: includes/admin/class-employees-page.php:209
 #: includes/class-pages.php:87
 #: includes/class-pages.php:351
 msgid "Name"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:96
-#: includes/admin/class-employees-page.php:191
+#: includes/admin/class-employees-page.php:113
+#: includes/admin/class-employees-page.php:213
 #: includes/admin/class-page-editor.php:269
 #: includes/class-pages.php:95
 #: includes/class-pages.php:343
 msgid "Email"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:99
+#: includes/admin/class-employees-page.php:116
 msgid "The name is shown to visitors on booking pages. The email receives booking notifications and is suggested when connecting Google."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:105
+#: includes/admin/class-employees-page.php:122
 msgid "Employee"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:106
-#: includes/admin/class-employees-page.php:214
+#: includes/admin/class-employees-page.php:123
+#: includes/admin/class-employees-page.php:236
 msgid "Google Calendar"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:107
-#: includes/admin/class-employees-page.php:207
+#: includes/admin/class-employees-page.php:124
+#: includes/admin/class-employees-page.php:229
 #: includes/class-pages.php:46
 #: includes/class-pages.php:51
 msgid "Booking pages"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:113
+#: includes/admin/class-employees-page.php:130
 msgid "No employees yet. Add the first one above."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:126
+#: includes/admin/class-employees-page.php:143
 #: includes/admin/class-page-editor.php:521
 msgid "Edit"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:126
+#: includes/admin/class-employees-page.php:143
 msgid "Connect & edit"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:127
+#: includes/admin/class-employees-page.php:144
 msgid "Delete"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:144
+#: includes/admin/class-employees-page.php:161
 msgid "Not connected"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:151
+#: includes/admin/class-employees-page.php:175
 msgid "Connected"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:176
+#. translators: %d: number of other Google accounts
+#: includes/admin/class-employees-page.php:178
+#, php-format
+msgid "+ %d other Google account checked for conflicts"
+msgid_plural "+ %d other Google accounts checked for conflicts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin/class-employees-page.php:198
 msgid "All employees"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:188
+#: includes/admin/class-employees-page.php:210
 msgid "Shown to visitors."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:192
+#: includes/admin/class-employees-page.php:214
 msgid "Receives booking notifications."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:195
+#: includes/admin/class-employees-page.php:217
 msgid "Photo"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:200
+#: includes/admin/class-employees-page.php:222
 msgid "Choose photo"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:201
+#: includes/admin/class-employees-page.php:223
+#: includes/admin/class-employees-page.php:354
 #: includes/admin/class-page-editor.php:401
 msgid "Remove"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:203
+#: includes/admin/class-employees-page.php:225
 msgid "Shown on booking pages with \"Show the hosts' photos\" switched on. A square photo works best. Without one, the Gravatar for the email address is used."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:208
+#: includes/admin/class-employees-page.php:230
 msgid "Not used on any booking page yet. Add the employee under \"Hosts\" when editing a booking page."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:217
+#: includes/admin/class-employees-page.php:239
 msgid "The Google connection has not been set up yet."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:218
+#: includes/admin/class-employees-page.php:240
 msgid "Follow the setup guide in Settings first."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:223
+#: includes/admin/class-employees-page.php:245
+#: includes/admin/class-employees-page.php:353
 msgid "Refresh calendar list"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:224
+#: includes/admin/class-employees-page.php:246
 msgid "Reconnect"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:225
+#: includes/admin/class-employees-page.php:247
 msgid "Disconnect"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:228
+#: includes/admin/class-employees-page.php:250
 msgid "Calendars"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:229
+#: includes/admin/class-employees-page.php:251
 msgid "Times are blocked when this employee has an event marked \"Busy\" in any of the checked calendars. Events marked \"Free\" – such as most all-day events – don't block bookings. New meetings are added to the calendar selected under \"Add meetings here\"."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:233
+#: includes/admin/class-employees-page.php:255
 msgid "Calendar"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:234
+#: includes/admin/class-employees-page.php:256
+#: includes/admin/class-employees-page.php:337
 msgid "Check for conflicts"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:235
+#: includes/admin/class-employees-page.php:257
 msgid "Add meetings here"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:246
+#: includes/admin/class-employees-page.php:268
+#: includes/admin/class-employees-page.php:346
 msgid "primary"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:258
+#: includes/admin/class-employees-page.php:282
 msgid "Not connected yet. There are two ways to connect:"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:261
+#: includes/admin/class-employees-page.php:285
 msgid "If you can sign in to the employee's Google account (or this is you):"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:262
+#: includes/admin/class-employees-page.php:286
 msgid "Connect Google Calendar"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:265
+#: includes/admin/class-employees-page.php:289
 msgid "Otherwise, create a personal link and send it to the employee. They sign in with Google, click Allow, and they are connected. The link works for 7 days."
 msgstr ""
 
 #. translators: %s: expiry date
-#: includes/admin/class-employees-page.php:271
+#: includes/admin/class-employees-page.php:295
+#: includes/admin/class-employees-page.php:368
 #, php-format
 msgid "Valid until %s."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:274
+#: includes/admin/class-employees-page.php:298
+#: includes/admin/class-employees-page.php:371
 msgid "Create a new link"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:276
+#: includes/admin/class-employees-page.php:300
 msgid "Create connect link"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:286
+#: includes/admin/class-employees-page.php:310
 msgid "Save employee"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:308
+#: includes/admin/class-employees-page.php:325
+msgid "Other Google accounts"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:326
+msgid "Busy times in other Google accounts of this employee – for example a personal Gmail next to a work account – can block bookings too. These accounts are only asked for free/busy information and their list of calendars; meetings are always added with the account above. Accounts outside your Google Workspace need the Google Cloud app's audience set to External (see Settings)."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:358
+msgid "Add another Google account"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:361
+msgid "Or send the employee a link: they open it, sign in with the other account and click Allow. The link works for 7 days."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:373
+msgid "Create link"
+msgstr ""
+
+#: includes/admin/class-employees-page.php:394
 msgid "Please enter a name and a valid email address."
 msgstr ""
 
@@ -837,7 +885,7 @@ msgstr ""
 
 #: includes/admin/class-page-editor.php:294
 #: includes/admin/class-settings-page.php:314
-#: includes/class-employees.php:349
+#: includes/class-employees.php:375
 msgid "Bookings → Employees"
 msgstr ""
 
@@ -1708,42 +1756,42 @@ msgid "No"
 msgstr ""
 
 #. translators: 1: site name, 2: employee name
-#: includes/class-employees.php:331
+#: includes/class-employees.php:357
 #, php-format
 msgid "[%1$s] Google Calendar connection for %2$s stopped working"
 msgstr ""
 
 #. translators: %s: employee name
-#: includes/class-employees.php:337
+#: includes/class-employees.php:363
 #, php-format
 msgid "The Google Calendar connection for %s has stopped working."
 msgstr ""
 
-#: includes/class-employees.php:341
+#: includes/class-employees.php:367
 msgid "These booking pages show no available times until it is fixed:"
 msgstr ""
 
 #. translators: %s: error message from Google
-#: includes/class-employees.php:344
+#: includes/class-employees.php:370
 #, php-format
 msgid "Google said: %s"
 msgstr ""
 
-#: includes/class-employees.php:345
+#: includes/class-employees.php:371
 msgid "How to fix it"
 msgstr ""
 
 #. translators: %s: employee name
-#: includes/class-employees.php:347
+#: includes/class-employees.php:373
 #, php-format
 msgid "%s opens this link, signs in with Google and clicks Allow. The link works for 7 days:"
 msgstr ""
 
-#: includes/class-employees.php:349
+#: includes/class-employees.php:375
 msgid "An administrator can also reconnect in wp-admin:"
 msgstr ""
 
-#: includes/class-employees.php:350
+#: includes/class-employees.php:376
 msgid "Common causes: the Google password was changed, access was removed in the Google account settings, the Google Cloud app is still in \"Testing\" mode (access expires after 7 days), or a selected calendar was deleted or is no longer shared."
 msgstr ""
 
@@ -1934,46 +1982,60 @@ msgstr ""
 msgid "The verification could not be completed. Please try again."
 msgstr ""
 
-#: includes/class-google.php:97
-#: includes/class-google.php:122
+#: includes/class-google.php:107
+#: includes/class-google.php:132
 msgid "This link has expired"
 msgstr ""
 
-#: includes/class-google.php:97
-#: includes/class-google.php:122
+#: includes/class-google.php:107
+#: includes/class-google.php:132
 msgid "Please ask your administrator for a new link to connect your Google Calendar."
 msgstr ""
 
 #. translators: %s: error message
-#: includes/class-google.php:114
-#: includes/class-google.php:119
-#: includes/class-google.php:149
+#: includes/class-google.php:124
+#: includes/class-google.php:129
+#: includes/class-google.php:137
+#: includes/class-google.php:165
 msgid "Connection failed"
 msgstr ""
 
-#: includes/class-google.php:114
+#: includes/class-google.php:124
+#: includes/class-google.php:137
 msgid "The request was invalid or has expired. Please try again."
 msgstr ""
 
 #. translators: %s: error message
-#: includes/class-google.php:149
+#: includes/class-google.php:165
 #, php-format
 msgid "Google returned an error: %s"
 msgstr ""
 
-#: includes/class-google.php:151
+#: includes/class-google.php:168
+msgid "Google account added"
+msgstr ""
+
+#: includes/class-google.php:168
+msgid "Thank you! Busy times in this account now block bookings too. You can close this window."
+msgstr ""
+
+#: includes/class-google.php:170
 msgid "Google Calendar connected"
 msgstr ""
 
-#: includes/class-google.php:151
+#: includes/class-google.php:170
 msgid "Thank you! Your calendar is now connected and you can close this window."
 msgstr ""
 
-#: includes/class-google.php:180
+#: includes/class-google.php:244
+msgid "This is the Google account the employee is already connected with. Sign in with another account."
+msgstr ""
+
+#: includes/class-google.php:295
 msgid "Google did not return a refresh token. Remove the app under myaccount.google.com/permissions and connect again."
 msgstr ""
 
-#: includes/class-google.php:226
+#: includes/class-google.php:357
 msgid "Google Calendar is not connected."
 msgstr ""
 
@@ -2128,29 +2190,29 @@ msgstr ""
 msgid "Booking data was anonymized. Events already in Google Calendar must be removed there if needed."
 msgstr ""
 
-#: includes/class-protection.php:179
+#: includes/class-protection.php:188
 msgid "We could not accept this booking. Please try again or contact us."
 msgstr ""
 
-#: includes/class-protection.php:190
+#: includes/class-protection.php:199
 msgid "Your session has expired. Please reload the page and try again."
 msgstr ""
 
-#: includes/class-protection.php:211
+#: includes/class-protection.php:220
 msgid "Too many booking attempts. Please try again later."
 msgstr ""
 
-#: includes/class-protection.php:217
+#: includes/class-protection.php:226
 msgid "The spam check failed. Please try again."
 msgstr ""
 
 #. translators: %d: HTTP status code
-#: includes/class-protection.php:368
+#: includes/class-protection.php:377
 #, php-format
 msgid "The Cap server answered with HTTP %d but not with a verification result. Check the URL and site key."
 msgstr ""
 
-#: includes/class-protection.php:371
+#: includes/class-protection.php:380
 msgid "The Cap server rejected the site key or the secret key."
 msgstr ""
 

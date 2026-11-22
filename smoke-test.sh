@@ -66,7 +66,8 @@ page_id=$(wp eval '
 $page = wp_insert_post( array( "post_type" => "nemvo_booking_page", "post_status" => "publish", "post_title" => "Smoke page" ) );
 wp_insert_post( array( "post_type" => "page", "post_status" => "publish", "post_name" => "smoke", "post_title" => "Smoke", "post_content" => "[nemvo_booking id=\"$page\"]" ) );
 echo $page;')
-expect "database version 4 on a new install" "$([ "$(wp option get nemvo_booking_db_version)" = 4 ] && echo 1)"
+expect "database version 5 on a new install" "$([ "$(wp option get nemvo_booking_db_version)" = 5 ] && echo 1)"
+expect "accounts table for extra Google accounts" "$(wp eval 'global $wpdb; echo $wpdb->get_var( "SHOW TABLES LIKE \"{$wpdb->prefix}nemvo_booking_accounts\"" ) ? 1 : 0;')"
 
 jar="$work/cookies"
 curl -s -c "$jar" -b "$jar" -o /dev/null -d "log=admin&pwd=admin&testcookie=1" -b "wordpress_test_cookie=WP%20Cookie%20check" "$url/wp-login.php"
@@ -116,7 +117,13 @@ update_option( "nemvo_booking_settings", $s );
 update_option( "nemvo_booking_db_version", "3" );')
 curl -s -o /dev/null "$url/smoke/"
 after=$(wp eval '$s = get_option( "nemvo_booking_settings" ); echo get_post_type( '"$legacy_page"' ), "|", get_option( "nemvo_booking_db_version" ), "|", 0 === strpos( $s["google_client_secret"], "v1:" ) ? "encrypted" : "plain", "|", NemvoBooking\Settings::get( "google_client_secret" ), "|", isset( $s["cap_script_url"] ) ? "kept" : "dropped";')
-expect "booking page moved to nemvo_booking_page, secret encrypted, old option dropped ($after)" "$([ "$after" = 'nemvo_booking_page|4|encrypted|GOCSPX-plain-secret|dropped' ] && echo 1)"
+expect "booking page moved to nemvo_booking_page, secret encrypted, old option dropped ($after)" "$([ "$after" = 'nemvo_booking_page|5|encrypted|GOCSPX-plain-secret|dropped' ] && echo 1)"
+
+echo "== Upgrade from 1.2.3 (database version 4)"
+wp eval 'global $wpdb; $wpdb->query( "DROP TABLE {$wpdb->prefix}nemvo_booking_accounts" ); update_option( "nemvo_booking_db_version", 4 );'
+curl -s -o /dev/null "$url/smoke/"
+after=$(wp eval 'global $wpdb; echo get_option( "nemvo_booking_db_version" ), "|", $wpdb->get_var( "SHOW TABLES LIKE \"{$wpdb->prefix}nemvo_booking_accounts\"" ) ? "accounts" : "missing", "|", get_post_type( '"$legacy_page"' );')
+expect "accounts table added, nothing else moved ($after)" "$([ "$after" = '5|accounts|nemvo_booking_page' ] && echo 1)"
 
 echo "== Plugin Check (errors and warnings)"
 wp plugin install plugin-check --activate >/dev/null 2>&1

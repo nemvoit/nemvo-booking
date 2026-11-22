@@ -11,6 +11,7 @@ Requires WordPress 6.2 or later and PHP 7.4 or later. MIT licensed.
 - **Booking pages:** create as many as you like, each with its own hosts. For example, one page for you, one for a colleague and one that books you both. Every host attends, and a time is only offered when all of them are free. One host is the organizer, and their calendar holds the meeting.
 - **Host photos** at the top of the booking page, on by default and switchable per page. Each host's photo comes from the media library, with their Gravatar as fallback.
 - **Google Calendar per host:** connected with OAuth, either by an admin or through a 7-day connect link sent to the host, who doesn't need a WordPress account. You choose which calendars to check for conflicts and which calendar new meetings go into.
+- **Other Google accounts per host:** a host can add more Google accounts (say, a personal Gmail next to the work account) whose busy times also block bookings. They are only granted `calendar.freebusy` and `calendar.calendarlist.readonly`; meetings always go into the main account.
 - **Busy-aware availability:** Google's free/busy data is used, so only events marked *Busy* block a time. A free all-day event doesn't block anything.
 - **A Google Meet link** on every meeting.
 - **One email per person:** the calendar invitation itself. You choose who sends it:
@@ -275,6 +276,7 @@ nemvo-booking/
   languages/                 translation template (nemvo-booking.pot)
   includes/
     class-google.php         OAuth + Calendar API (no SDK)
+    class-accounts.php       hosts' other Google accounts (free/busy only)
     class-availability.php   slot calculation
     class-bookings.php       create / reschedule / cancel, templates
     class-mailer.php         wp_mail + iCalendar invites
@@ -290,6 +292,13 @@ nemvo-booking/
 ```
 
 ## Changelog
+
+### 1.2.4
+
+- Other Google accounts per host, checked for conflicts only: new table `{prefix}nemvo_booking_accounts` (database version 5, created by `dbDelta()` on update; nothing else moves) and class `NemvoBooking\Accounts`. Added under Bookings → Employees with "Add another Google account" or a 7-day link (`?action=nemvo_booking_connect&…&add=1`). The consent screen asks only for `calendar.freebusy` + `calendar.calendarlist.readonly`, with `prompt=select_account consent` and no login hint.
+- `Google::free_busy()` merges the main account and every extra account. If any of them can't be read, the host counts as unavailable (as with a broken main connection), and the extra account gets its own error, alert email (with an add-account link) and wp-admin warning.
+- Removing an account, deleting or disconnecting a host, and uninstalling revoke the token at Google, except when the same Google account is still connected elsewhere on the site (Google revokes the whole grant).
+- Alert emails reuse a connect link that is still valid for at least a day, so two alerts don't invalidate each other's links.
 
 ### 1.2.3
 
