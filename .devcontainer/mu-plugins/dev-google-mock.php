@@ -86,7 +86,21 @@ add_filter(
 			$from = new DateTimeImmutable( $req['timeMin'] );
 			$to   = new DateTimeImmutable( $req['timeMax'] );
 			$cals = array();
+			$unreadable = (array) get_option( 'nemvo_booking_mock_unreadable', array() );
 			foreach ( $req['items'] as $item ) {
+				// Like Google: its read-only calendars (holidays, birthdays) can't be queried, plus any
+				// calendar listed in the option nemvo_booking_mock_unreadable.
+				if ( false !== strpos( $item['id'], '@group.v.calendar.google.com' ) || in_array( $item['id'], $unreadable, true ) ) {
+					$cals[ $item['id'] ] = array(
+						'errors' => array(
+							array(
+								'domain' => 'global',
+								'reason' => 'notFound',
+							),
+						),
+					);
+					continue;
+				}
 				$busy = array();
 				$hours = array( array( 12, 13 ) );
 				if ( 0 === strpos( $email, 'anna@' ) ) {

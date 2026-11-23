@@ -2,14 +2,14 @@
 # This file is distributed under the MIT.
 msgid ""
 msgstr ""
-"Project-Id-Version: Nemvo Booking 1.2.4\n"
-"Report-Msgid-Bugs-To: https://github.com/nemvoit/nemvo-booking/issues\n"
+"Project-Id-Version: Nemvo Booking 1.2.5\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/nemvo-booking\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-22T10:31:23+00:00\n"
+"POT-Creation-Date: 2026-11-23T07:22:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: nemvo-booking\n"
@@ -200,7 +200,7 @@ msgstr ""
 #: includes/admin/class-admin.php:240
 #: includes/admin/class-employees-page.php:165
 #: includes/admin/class-employees-page.php:171
-#: includes/admin/class-employees-page.php:334
+#: includes/admin/class-employees-page.php:355
 msgid "Error"
 msgstr ""
 
@@ -487,7 +487,7 @@ msgid "Choose photo"
 msgstr ""
 
 #: includes/admin/class-employees-page.php:223
-#: includes/admin/class-employees-page.php:354
+#: includes/admin/class-employees-page.php:375
 #: includes/admin/class-page-editor.php:401
 msgid "Remove"
 msgstr ""
@@ -509,7 +509,7 @@ msgid "Follow the setup guide in Settings first."
 msgstr ""
 
 #: includes/admin/class-employees-page.php:245
-#: includes/admin/class-employees-page.php:353
+#: includes/admin/class-employees-page.php:374
 msgid "Refresh calendar list"
 msgstr ""
 
@@ -534,7 +534,7 @@ msgid "Calendar"
 msgstr ""
 
 #: includes/admin/class-employees-page.php:256
-#: includes/admin/class-employees-page.php:337
+#: includes/admin/class-employees-page.php:358
 msgid "Check for conflicts"
 msgstr ""
 
@@ -543,7 +543,7 @@ msgid "Add meetings here"
 msgstr ""
 
 #: includes/admin/class-employees-page.php:268
-#: includes/admin/class-employees-page.php:346
+#: includes/admin/class-employees-page.php:367
 msgid "primary"
 msgstr ""
 
@@ -565,13 +565,13 @@ msgstr ""
 
 #. translators: %s: expiry date
 #: includes/admin/class-employees-page.php:295
-#: includes/admin/class-employees-page.php:368
+#: includes/admin/class-employees-page.php:389
 #, php-format
 msgid "Valid until %s."
 msgstr ""
 
 #: includes/admin/class-employees-page.php:298
-#: includes/admin/class-employees-page.php:371
+#: includes/admin/class-employees-page.php:392
 msgid "Create a new link"
 msgstr ""
 
@@ -583,27 +583,31 @@ msgstr ""
 msgid "Save employee"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:325
+#: includes/admin/class-employees-page.php:326
+msgid "Google doesn't share busy times for this calendar. To close booking pages on public holidays, use \"Public holidays\" in Settings."
+msgstr ""
+
+#: includes/admin/class-employees-page.php:346
 msgid "Other Google accounts"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:326
+#: includes/admin/class-employees-page.php:347
 msgid "Busy times in other Google accounts of this employee – for example a personal Gmail next to a work account – can block bookings too. These accounts are only asked for free/busy information and their list of calendars; meetings are always added with the account above. Accounts outside your Google Workspace need the Google Cloud app's audience set to External (see Settings)."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:358
+#: includes/admin/class-employees-page.php:379
 msgid "Add another Google account"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:361
+#: includes/admin/class-employees-page.php:382
 msgid "Or send the employee a link: they open it, sign in with the other account and click Allow. The link works for 7 days."
 msgstr ""
 
-#: includes/admin/class-employees-page.php:373
+#: includes/admin/class-employees-page.php:394
 msgid "Create link"
 msgstr ""
 
-#: includes/admin/class-employees-page.php:394
+#: includes/admin/class-employees-page.php:415
 msgid "Please enter a name and a valid email address."
 msgstr ""
 
@@ -885,7 +889,7 @@ msgstr ""
 
 #: includes/admin/class-page-editor.php:294
 #: includes/admin/class-settings-page.php:314
-#: includes/class-employees.php:375
+#: includes/class-employees.php:377
 msgid "Bookings → Employees"
 msgstr ""
 
@@ -1756,42 +1760,42 @@ msgid "No"
 msgstr ""
 
 #. translators: 1: site name, 2: employee name
-#: includes/class-employees.php:357
+#: includes/class-employees.php:359
 #, php-format
 msgid "[%1$s] Google Calendar connection for %2$s stopped working"
 msgstr ""
 
 #. translators: %s: employee name
-#: includes/class-employees.php:363
+#: includes/class-employees.php:365
 #, php-format
 msgid "The Google Calendar connection for %s has stopped working."
 msgstr ""
 
-#: includes/class-employees.php:367
+#: includes/class-employees.php:369
 msgid "These booking pages show no available times until it is fixed:"
 msgstr ""
 
 #. translators: %s: error message from Google
-#: includes/class-employees.php:370
+#: includes/class-employees.php:372
 #, php-format
 msgid "Google said: %s"
 msgstr ""
 
-#: includes/class-employees.php:371
+#: includes/class-employees.php:373
 msgid "How to fix it"
 msgstr ""
 
 #. translators: %s: employee name
-#: includes/class-employees.php:373
+#: includes/class-employees.php:375
 #, php-format
 msgid "%s opens this link, signs in with Google and clicks Allow. The link works for 7 days:"
 msgstr ""
 
-#: includes/class-employees.php:375
+#: includes/class-employees.php:377
 msgid "An administrator can also reconnect in wp-admin:"
 msgstr ""
 
-#: includes/class-employees.php:376
+#: includes/class-employees.php:378
 msgid "Common causes: the Google password was changed, access was removed in the Google account settings, the Google Cloud app is still in \"Testing\" mode (access expires after 7 days), or a selected calendar was deleted or is no longer shared."
 msgstr ""
 

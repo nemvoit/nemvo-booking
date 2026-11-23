@@ -266,7 +266,7 @@ class Employees_Page {
 								?>
 								<tr>
 									<td><?php echo esc_html( $cal['summary'] ); ?><?php echo $cal['primary'] ? ' <span class="description">(' . esc_html__( 'primary', 'nemvo-booking' ) . ')</span>' : ''; ?></td>
-									<td><input type="checkbox" name="busy_calendars[]" value="<?php echo esc_attr( $cal['id'] ); ?>" <?php checked( in_array( $cal['id'], Employees::busy_calendars( $employee ), true ) || ( $cal['primary'] && in_array( 'primary', Employees::busy_calendars( $employee ), true ) ) ); ?>></td>
+									<td><?php self::busy_checkbox( 'busy_calendars[]', $cal, Employees::busy_calendars( $employee ) ); ?></td>
 									<td>
 									<?php
 									if ( $writable ) :
@@ -314,6 +314,27 @@ class Employees_Page {
 	}
 
 	/**
+	 * Prints the "Check for conflicts" checkbox of a calendar, or a note for calendars whose busy
+	 * times Google doesn't share (such as public holidays).
+	 *
+	 * @param string   $name Field name.
+	 * @param array    $cal  Calendar from the calendar list.
+	 * @param string[] $busy Calendar IDs checked for conflicts.
+	 */
+	private static function busy_checkbox( string $name, array $cal, array $busy ) {
+		if ( ! Google::has_busy_times( $cal['id'] ) ) {
+			echo '<input type="checkbox" disabled> <span class="description">' . esc_html__( 'Google doesn\'t share busy times for this calendar. To close booking pages on public holidays, use "Public holidays" in Settings.', 'nemvo-booking' ) . '</span>';
+			return;
+		}
+		printf(
+			'<input type="checkbox" name="%1$s" value="%2$s" %3$s>',
+			esc_attr( $name ),
+			esc_attr( $cal['id'] ),
+			checked( in_array( $cal['id'], $busy, true ) || ( $cal['primary'] && in_array( 'primary', $busy, true ) ), true, false )
+		);
+	}
+
+	/**
 	 * Renders the employee's other Google accounts, whose calendars are only checked for conflicts.
 	 *
 	 * @param array  $employee Employee (connected).
@@ -344,7 +365,7 @@ class Employees_Page {
 					?>
 					<tr>
 						<td><?php echo esc_html( $cal['summary'] ); ?><?php echo $cal['primary'] ? ' <span class="description">(' . esc_html__( 'primary', 'nemvo-booking' ) . ')</span>' : ''; ?></td>
-						<td><input type="checkbox" name="account_busy[<?php echo esc_attr( $account['id'] ); ?>][]" value="<?php echo esc_attr( $cal['id'] ); ?>" <?php checked( in_array( $cal['id'], $busy, true ) || ( $cal['primary'] && in_array( 'primary', $busy, true ) ) ); ?>></td>
+						<td><?php self::busy_checkbox( 'account_busy[' . $account['id'] . '][]', $cal, $busy ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
@@ -421,7 +442,7 @@ class Employees_Page {
 		if ( Employees::is_connected( $employee ) ) {
 			$known                   = wp_list_pluck( $employee['calendars'], 'id' );
 			$busy                    = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST['busy_calendars'] ?? array() ) ) );
-			$data['busy_calendars']  = array_values( array_intersect( $busy, $known ) );
+			$data['busy_calendars']  = array_values( array_filter( array_intersect( $busy, $known ), array( Google::class, 'has_busy_times' ) ) );
 			$target                  = sanitize_text_field( wp_unslash( $_POST['target_calendar'] ?? '' ) );
 			$data['target_calendar'] = in_array( $target, $known, true ) ? $target : '';
 			if ( ! $data['busy_calendars'] ) {
@@ -430,7 +451,7 @@ class Employees_Page {
 			$posted = wp_unslash( (array) ( $_POST['account_busy'] ?? array() ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value is sanitized below.
 			foreach ( Accounts::for_employee( $id ) as $account ) {
 				$checked = array_map( 'sanitize_text_field', (array) ( $posted[ $account['id'] ] ?? array() ) );
-				$busy    = array_values( array_intersect( $checked, wp_list_pluck( $account['calendars'], 'id' ) ) );
+				$busy    = array_values( array_filter( array_intersect( $checked, wp_list_pluck( $account['calendars'], 'id' ) ), array( Google::class, 'has_busy_times' ) ) );
 				Accounts::update( $account['id'], array( 'busy_calendars' => $busy ? $busy : array( 'primary' ) ) );
 			}
 		}

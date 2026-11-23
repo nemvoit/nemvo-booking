@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling, google calendar, google meet
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -183,6 +183,10 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 
 == Changelog ==
 
+= 1.2.5 =
+* Fixed: a host with a public holiday calendar (such as "Holidays in Sweden") ticked under "Check for conflicts" was reported as not working, with a new warning, log entry and alert email again and again. Google doesn't share busy times for its holiday and birthday calendars, so they can no longer be ticked and are ignored if they were. Public holidays still close booking pages through Settings → Public holidays.
+* When some of a host's checked calendars can't be read, the warning stays until they can, instead of being cleared and raised again on every availability lookup.
+
 = 1.2.4 =
 * New: hosts can add other Google accounts, for example a personal Gmail next to a work account. Busy times in their checked calendars block bookings; meetings still go into the main account. Add them under Bookings → Employees, or send the host a link. These accounts are only asked for free/busy information and their list of calendars.
 * If one of those accounts stops working, the host shows no free times until it is fixed, and you get the same email and wp-admin warning as for the main connection.
@@ -211,6 +215,9 @@ The actions `nemvo_booking_created`, `nemvo_booking_rescheduled`, `nemvo_booking
 * First public release.
 
 == Upgrade Notice ==
+
+= 1.2.5 =
+Fixes repeated "Cannot read calendar(s)" warnings and alert emails for hosts with a public holiday calendar ticked.
 
 = 1.2.4 =
 Check other Google accounts of a host for conflicts. Adds a database table on update.

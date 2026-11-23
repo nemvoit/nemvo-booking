@@ -153,13 +153,15 @@ class Employees {
 	}
 
 	/**
-	 * Calendar IDs checked for conflicts. Defaults to the primary calendar.
+	 * Calendar IDs checked for conflicts. Defaults to the primary calendar. Calendars Google's
+	 * free/busy can't read (such as public holidays) are left out.
 	 *
 	 * @param array $employee Employee.
 	 * @return string[]
 	 */
 	public static function busy_calendars( array $employee ): array {
-		return $employee['busy_calendars'] ? $employee['busy_calendars'] : array( 'primary' );
+		$ids = array_values( array_filter( (array) $employee['busy_calendars'], array( Google::class, 'has_busy_times' ) ) );
+		return $ids ? $ids : array( 'primary' );
 	}
 
 	/**

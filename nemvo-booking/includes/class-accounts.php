@@ -177,13 +177,15 @@ class Accounts {
 	}
 
 	/**
-	 * Calendar IDs checked for conflicts. Defaults to the primary calendar.
+	 * Calendar IDs checked for conflicts. Defaults to the primary calendar. Calendars Google's
+	 * free/busy can't read (such as public holidays) are left out.
 	 *
 	 * @param array $account Account.
 	 * @return string[]
 	 */
 	public static function busy_calendars( array $account ): array {
-		return $account['busy_calendars'] ? $account['busy_calendars'] : array( 'primary' );
+		$ids = array_values( array_filter( (array) $account['busy_calendars'], array( Google::class, 'has_busy_times' ) ) );
+		return $ids ? $ids : array( 'primary' );
 	}
 
 	/**

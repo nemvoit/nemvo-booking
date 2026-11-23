@@ -394,9 +394,11 @@ class Google {
 	 * @param string     $path   Path below the API base URL.
 	 * @param array      $query  Query parameters.
 	 * @param array|null $body   JSON body.
+	 * @param bool       $report_ok False when the caller decides itself whether the answer means the
+	 *                              connection works (free/busy answers can hold per-calendar errors).
 	 * @return array|\WP_Error Decoded response.
 	 */
-	public static function request( array $employee, string $method, string $path, array $query = array(), ?array $body = null ) {
+	public static function request( array $employee, string $method, string $path, array $query = array(), ?array $body = null, bool $report_ok = true ) {
 		$token = self::access_token( $employee );
 		if ( is_wp_error( $token ) ) {
 			return $token;
@@ -426,7 +428,7 @@ class Google {
 			if ( ! ( 'DELETE' === $method && in_array( $status, array( 404, 410 ), true ) ) ) {
 				self::report_problem( $employee, $result );
 			}
-		} else {
+		} elseif ( $report_ok ) {
 			self::report_ok( $employee );
 		}
 		return $result;
@@ -543,7 +545,8 @@ class Google {
 					},
 					$calendars
 				),
-			)
+			),
+			false
 		);
 		if ( is_wp_error( $data ) ) {
 			return $data;
@@ -566,8 +569,24 @@ class Google {
 			if ( count( $failed ) >= count( $calendars ) ) {
 				return $error;
 			}
+		} else {
+			// Only now: clearing the error before a calendar fails again would alert on every lookup.
+			self::report_ok( $connection );
 		}
 		return $busy;
+	}
+
+	/**
+	 * Whether Google's free/busy API can read a calendar. Google's own read-only calendars
+	 * (public holidays, contacts' birthdays and the like, all `…@group.v.calendar.google.com`)
+	 * can't be queried, and their events are marked "Free" anyway.
+	 *
+	 * @param string $calendar_id Calendar ID.
+	 * @return bool
+	 */
+	public static function has_busy_times( string $calendar_id ): bool {
+		$suffix = '@group.v.calendar.google.com';
+		return substr( strtolower( $calendar_id ), -strlen( $suffix ) ) !== $suffix;
 	}
 
 	/**

@@ -293,6 +293,11 @@ nemvo-booking/
 
 ## Changelog
 
+### 1.2.5
+
+- Google's free/busy API answers `notFound` for its own read-only calendars (`…#holiday@group.v.calendar.google.com`, birthdays and other `…@group.v.calendar.google.com` IDs), and their events are transparent anyway. New `Google::has_busy_times()`; `Employees::busy_calendars()` and `Accounts::busy_calendars()` drop such IDs (stored selections are ignored without a migration), saving drops them, and the Employees screen shows a disabled checkbox with a pointer to Settings → Public holidays.
+- Partial free/busy failures no longer flap: `Google::request()` takes `$report_ok` (default `true`), and `busy_times()` clears the recorded error only when every calendar was read. Before, each uncached lookup cleared the error and set it again, logging `google.connection_broken` and sending an alert email every time.
+
 ### 1.2.4
 
 - Other Google accounts per host, checked for conflicts only: new table `{prefix}nemvo_booking_accounts` (database version 5, created by `dbDelta()` on update; nothing else moves) and class `NemvoBooking\Accounts`. Added under Bookings → Employees with "Add another Google account" or a 7-day link (`?action=nemvo_booking_connect&…&add=1`). The consent screen asks only for `calendar.freebusy` + `calendar.calendarlist.readonly`, with `prompt=select_account consent` and no login hint.
